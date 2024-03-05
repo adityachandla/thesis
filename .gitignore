@@ -1,0 +1,14 @@
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.lof
+*.log
+*.lol
+*.lot
+*.gz
+*.toc
+*.pdf
+*.out
+.latexrun*
