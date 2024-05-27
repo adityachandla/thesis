@@ -1,1 +1,12 @@
-THIS IS MY ABSTRACT
+As the size of graphs being queried by graph databases increases, coupling 
+storage and compute increases the cost and limits the flexibility of
+traditional graph database management systems (GDBMS). As part of this thesis,
+we explore the viability of an architecture where the compute and storage are
+independent. This independence is achieved using a distributed cloud storage
+service (AWS S3) which provides bottomless storage and theoretically unlimited
+throughput. Using this distributed cloud storage solution, we evaluate the
+latency of running two common graph traversal algorithms i.e breadth first
+search (BFS) and depth first search (DFS). We then compare this latency with
+some other systems which may be used to perform BFS and DFS on large datasets. 
+Finally, we provide concrete use cases where using such a decoupled system might
+be better suited. 
