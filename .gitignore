@@ -9,6 +9,5 @@
 *.lot
 *.gz
 *.toc
-*.pdf
 *.out
 .latexrun*

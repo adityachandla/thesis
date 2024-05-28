@@ -4,8 +4,69 @@ is increasing. Although this survey found that it was common for graphs to have
 tens of billions of edges, it also found that scalability was the primary
 concern of all the participants surveyed\cite{sahu2017ubiquity}. In this thesis,
 we evaluate one way to alleviate this concern of scalability by decoupling
-storage of base graph from the evaluation of queries on the graph.
+storage of base graph from the query evaluation.
 
 \medskip
 Today, all major cloud providers have a distributed cloud storage offering,
-Google cloud platform has Google cloud storage\cite{}
+Google cloud platform offers Google cloud storage\cite{gcpStorage}, Azure offers
+Azure Blob storage\cite{azureStorage}, and AWS offers Simple Storage Service or 
+S3\cite{awsS3}. These distributed storage services are already used by Big Data
+Analytics tools like Snowflake\cite{snowflake} and RDBMSs like Neon\cite{neonPostgres} 
+for storage of underlying data. The use of these distributed storage services has not
+yet been explored for storing and querying graph data.
+
+\medskip
+In this paper, we provide an initial analysis of how distributed storage services can 
+be used to query large graphs. While using these distributed storage services, the primary
+issue that needs to be addressed is of latency. The latency of accessing data in a networked
+distributed system involves communication over the network which is at least three orders of
+magnitude more than accessing data from local storage. In return for this increased latency,
+we get almost unlimited throughput as read operations are distributed across a cluster 
+of thousands of physical machines if not more. Therefore, in this paper, we evaluate ways to
+reduce the latency of accessing graphs.More precisely, we will focus on the 
+performance of two commonly used graph traversal algorithms: Breadth first search 
+(BFS) and Depth first search (DFS). We use these algorithms on LDBC datasets
+to provide results for multi-hop traversals. 
+
+\section{Structure of the thesis}
+
+\medskip
+In Chapter-\ref{chapter:preliminaries}, we provide the necessary background for
+this thesis. In Section-\ref{sec:distributedStorage} we talk about the
+history, architecture, and characteristics of distributed storage systems. We
+also give a brief overview of the capabilities of AWS S3, which is the service
+that we use in this thesis. Then,
+in Section-\ref{sec:serverlessArch}, we discuss the serverless architecture of
+databases and its advantages over traditional architectures. Finally, in
+Section-\ref{sec:cachingDistSys} we discuss the caching and prefetching
+strategies that we employ in this thesis to lower the latency of graph
+traversals.
+
+\medskip
+Chapter-\ref{chapter:experimentalEvaluation} contains almost all the unique
+contribution of this thesis. We start by discribing the architecture of our
+system and our evaluation methodology in Section-\ref{sec:sysArch} and 
+Section-\ref{sec:queryEvaluation}. Then, in Section-\ref{sec:baseline}, we
+present the performance of a baseline solution which does not use any
+sophisticated caching or any prefetching. Then, in
+Section-\ref{sec:impGraphAccess}, we utilize a more granular caching algorithm
+along with an  prefetching strategy which reduces the latency for
+accessing a node's neighbours in the graph. After that, in
+Section-\ref{sec:parallelAlgorithms}, we discuss the impact of parallelizing the
+graph traversal algorithms. Finally, in Section-\ref{sec:partitionSize}, we
+explore the impact of different partition sizes on the overall performance of
+the system for various levels of parallelisms.
+
+\medskip
+Chapter-\ref{chapter:comparisons} compares our system with other systems which
+may be used for performing traversals on large graphs. In
+Section-\ref{sec:neo4j}, we discuss the various methods that Neo4j provides for
+performing traversals on graphs. We then move on to discussing Neo4J's strategy
+for scaling to large graphs and possible shortcomings of their approach. We also
+talk about how these shortcomings also apply to traditional relational databases
+by extension. Then in Section-\ref{sec:flink}, we evaluate the performance of a
+popular Big data framework named Apache Flink\cite{flink} for performing graph
+traversals and discuss its advantages and disadvantages.
+
+\medskip
+Finally, in Chapter-\ref{chapter:conclusions},
