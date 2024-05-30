@@ -43,30 +43,40 @@ strategies that we employ in this thesis to lower the latency of graph
 traversals.
 
 \medskip
-Chapter-\ref{chapter:experimentalEvaluation} contains almost all the unique
-contribution of this thesis. We start by discribing the architecture of our
-system and our evaluation methodology in Section-\ref{sec:sysArch} and 
-Section-\ref{sec:queryEvaluation}. Then, in Section-\ref{sec:baseline}, we
-present the performance of a baseline solution which does not use any
-sophisticated caching or any prefetching. Then, in
-Section-\ref{sec:impGraphAccess}, we utilize a more granular caching algorithm
-along with an  prefetching strategy which reduces the latency for
-accessing a node's neighbours in the graph. After that, in
-Section-\ref{sec:parallelAlgorithms}, we discuss the impact of parallelizing the
-graph traversal algorithms. Finally, in Section-\ref{sec:partitionSize}, we
-explore the impact of different partition sizes on the overall performance of
-the system for various levels of parallelisms.
+In Chapter-\ref{chapter:systemArchitecture}, we introduce our architecture for
+performing traversals. We start by providing a description of each component and their
+responsibilities in Section-\ref{sec:componentOverview}. After that, we describe
+the traversal queries which will be evaluated by our system in Section-\ref{sec:queryEvaluation}.
+Then we provide a baseline implementation which we will be useful for comparing
+the impact of the improvements made in the subsequent sections. Finally, in
+Sections-\ref{sec:graphAccess}, \ref{sec:parallelAlgorithms}, and
+\ref{sec:partitionSize}, we describe the details of our proposed architecture
+which enables low latency traversals for large graphs.
 
 \medskip
-Chapter-\ref{chapter:comparisons} compares our system with other systems which
-may be used for performing traversals on large graphs. In
-Section-\ref{sec:neo4j}, we discuss the various methods that Neo4j provides for
-performing traversals on graphs. We then move on to discussing Neo4J's strategy
-for scaling to large graphs and possible shortcomings of their approach. We also
-talk about how these shortcomings also apply to traditional relational databases
-by extension. Then in Section-\ref{sec:flink}, we evaluate the performance of a
-popular Big data framework named Apache Flink\cite{flink} for performing graph
-traversals and discuss its advantages and disadvantages.
+In Chapter-\ref{chapter:evaluation}, we present the results of the
+implementation of the proposed system architecture. We begin this chapter by
+comparing the performance with the baseline solution in
+Section-\ref{sec:cmpBaseline}. Then in Section-\ref{sec:cmpOtherTools}, we
+compare the performance of our solution with Neo4j and Apache Flink. This
+section highlights various characteristics of different types of tools(GDBMS,
+RDBMS, Big Data tools, and Custom Solutions) and the areas in which they 
+are suitable. 
 
 \medskip
-Finally, in Chapter-\ref{chapter:conclusions},
+In Chapter-\ref{chapter:discussion}, we elucidate the reasoning for various choices
+made throughout the thesis.
+In Section-\ref{sec:altArchitectures} we discuss other possible architectures for
+performing traversals on large graphs using S3 and their advantages and
+disadvantages over the proposed architecture. Then, in
+Section-\ref{sec:useCases}, we discuss the use cases where this architecture
+can be more cost efficient and flexible compared to other tools and where users
+would be better off avoiding this architecture. Finally, in
+Section-\ref{sec:threats}, we consider the threats to the credibility of this
+work.
+
+\medskip
+Finally, in Chapter-\ref{chapter:conclusions}, we conclude the thesis and
+suggest possible directions for future work. This section contains information
+about how we may be able to extend this work to reach a point where we have a
+fully functioning graph database whose storage resides in S3.
