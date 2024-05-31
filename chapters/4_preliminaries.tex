@@ -91,26 +91,40 @@ characteristics of AWS S3 as mentioned in its documentation:
         single partition which may lead to lower performance. Although, it is
         mentioned that S3 automatically splits partitions in case of overload,
         there is some overhead and time delay in performing the split.
+    \item \textbf{Consistency}: Despite being a distributed system, AWS S3
+        provides a strong `Read-After-Write' consistency. This means that any
+        updates to an object are immediately visible to all clients.
 \end{enumerate}
 
-\section{Serverless Database Architectures}\label{sec:serverlessArch}
-The term `serverless' was originally used in relation to peer to peer
-communication where a server is not required to communicate between two
-machines. However, since the advent of cloud computing, this term has been
-commandeered by cloud providers to mean something entirely different. In the
-context of cloud computing, the term `serverless computing' is the culmination 
-of a trend of
-separating application logic from the underlying hardware resources. This trend
-began with the advent of virtual machines, was carried forward by
-containerization technologies like Docker, and culminated in serverless services
-like AWS Lambda. At every step along the way, the developers lost some control
-over the hardware and in return got increased development velocity and reduced
-infrastructure maintainance overhead.
+\section{Databases with separate compute and storage}\label{sec:serverlessArch}
+One of the first proposed implementation of a database with separate compute and
+storage can be traced back to 2008\cite{brantner2008building}, where Brantner et
+al. proposed an architecture of a relational database which used AWS S3 as its
+storage layer. The authors of this paper primarily focused on how to handle
+updates under various consistency models when the data is stored in S3. This
+idea was further developed over the years by AWS and culminated with the release
+of AWS Aurora\cite{verbitski2017amazon}. Although Aurora separated compute and
+storage, the write throughput was still limited due to the fact that all write
+traffic was directed to a single instance. The first database to support
+multiple read and write instances on top of distributed data is considered to be
+Snowflake\cite{dageville2016snowflake}. Their architecture was built upon the
+storage layer of AWS S3 on top of which users could create as many `virtual
+warehouses' as they needed. Since then, various databases with independent
+storage and compute planes like Neon\cite{neonPostgres} and AWS Aurora
+Serverless\cite{auroraServerless} have been released.
 
-% Write about serverless databases.
 \medskip
-Serverless Databases.
+The term `Serverless databases' is often used for databases with separate
+compute and storage, however, these two concepts are different. A `serverless
+database' has a pay-as-you-go model where you pay for the amount of storage that
+your databases uses and the compute resources that were used in a fixed amount
+of time. In this model, the users simply have to define the minimum and maximum
+compute resources that the database can use and the databases scales according
+to the load. Note that the definition of serverless database does not
+neccessitate separation between compute and storage and there are indeed
+databases like CockroachDB\cite{taft2020cockroachdb} which offer a serverless
+model although the underlying architecture couples storage and compute together.
 
- 
+
 
 \section{Caching and Prefetching in distributed systems}\label{sec:cachingDistSys}
