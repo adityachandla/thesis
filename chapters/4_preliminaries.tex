@@ -96,7 +96,7 @@ characteristics of AWS S3 as mentioned in its documentation:
         updates to an object are immediately visible to all clients.
 \end{enumerate}
 
-\section{Databases with separate compute and storage}\label{sec:serverlessArch}
+\section{Separating compute and storage}\label{sec:serverlessArch}
 One of the first proposed implementation of a database with separate compute and
 storage can be traced back to 2008\cite{brantner2008building}, where Brantner et
 al. proposed an architecture of a relational database which used AWS S3 as its
@@ -124,7 +124,97 @@ to the load. Note that the definition of serverless database does not
 neccessitate separation between compute and storage and there are indeed
 databases like CockroachDB\cite{taft2020cockroachdb} which offer a serverless
 model although the underlying architecture couples storage and compute together.
+Therefore, although separating compute and storage may be amenable to a
+serverless design, it is not a requirement for it. The term serverless,
+therefore, defines a type of payment model whereas having separate storage and
+compute for a database is more of an system architecture choice. 
+
+\medskip
+A database which separates compute and storage offers better scalability,
+elasticity, and modularity. When the compute and storage are
+separated, both of them can be scaled independently. A heavily used service
+which has relatively low amount of data can scale the database's compute without
+wasting any storage. On the other hand, a service which has a lot of data but
+has a low query workload can scale the database's storage without wasting any
+compute. Furthermore, this separation also provides more elasticity so that the
+database can seamlessly scale up when the workload increases and can scale down
+during low traffic hours. Finally, separating storage and compute can lead to
+more modularity since the storage layer and the compute layer can be upgraded
+and changed based on the system's requirements. For example, if a cloud provider
+launches a new instance type which is better suited for your workload, you can
+switch to the newer instance type without being concerned about data migration.
+These aforementioned characteristics make databases with separate compute and
+storage attractive to a variety of use-cases.
+
+\medskip
+Separating compute and storage in databases often comes at the cost of increased
+latency. This latency is a result of the network communication between the
+storage layer and compute layer that needs to take place to complete any
+database operation. Although the throughput of networks has massively increased
+in the past few years (AWS offers instances with upto 200 Gbps bandwidth), the
+latency of network communication is limited by the speed of light. Therefore, a
+database with a local SSD containing all the base data will always be faster
+than a database whose storage needs to be accessed over a network. The actual
+difference between performance depends on the physical distance between storage
+and compute nodes. If the entire deployment is in a single datacenter, the
+latency is around 500$\mu$s which is still around 10 times higher than access latency
+for an SSD\cite{jiang2021fusionraid}. This advantage becomes less pronnounced in
+distributed databases with coupled storage and compute since they may also require
+some communication between instances in order to respond to user queries.
+Although there are various caching and prefetching mechanisms to reduce latency
+for databases with separte storage and compute, there still remain cases where
+coupled storage and compute yields lower latencies.
 
 
+\section{Caching and Prefetching}\label{sec:cachingDistSys}
+The concept of caching and prefetching in case of graphs enable us to take
+advantage of spatial and temporal locality to reduce the latency of future graph
+accesses. The terms spatial and temporal locality come from literature on
+processor caches. In the context of a processor cache, temporal locality refers
+to the tendency of a memory location that is accessed now to be
+accessed again in the near future. Similarly, spatial locality refers to the 
+tendency of a memory location close to a recently accessed memory location to be
+accessed in the near future. These concepts can be translated to graphs as
+follows:
+\begin{enumerate}
+    \item \textbf{Spatial Locality} in case of graphs means that if a node is
+        accessed, then it is likely that this node's neighbours will be accessed
+        in the near future.
+    \item \textbf{Temporal Locality} in case of graphs refers to the existence
+        of nodes that are central according to some centrality metric. There are
+        various centrality measures\cite{klein2010centrality} which may help us 
+        understand which nodes are central for a particular graph algorithm. The
+        main idea is that there exist some nodes which have higher probability
+        of being accessed for while running a particular algorithm on a graph.
+\end{enumerate}
+In this sections, we will discuss some background research on caching and
+prefetching which would help us exploit  spatial and temporal locality to lower
+the data access latency for graph traversals.
 
-\section{Caching and Prefetching in distributed systems}\label{sec:cachingDistSys}
+% Talk about traditional caching schemes in one paragraph and introduce the
+% major caching techniques.
+Any caching scheme consists of two fundamental operations: admission of
+data to the cache and eviction of data from the cache. There are various cache
+eviction policies like Least Recently Used (LRU), Least Frequently Used (LFU)
+which define ways to find out what data to evict from the cache when it becomes
+full. There also exist eviction policies which rely on metadata related to the
+data in order to decide which data elements to evict. Such metadata might
+include size of the data element, time of last data access, and access latency
+of the element in case of a cache miss. Apart from eviction, a cache also needs
+an admission policy which, in case of most caches, is simply to add a piece of
+data in case of a cache miss. However, there do exist more sophisticated
+admission algorithms like TinyLFU\cite{einziger2017tinylfu} which make the
+admission decision based on metadata related to a data object, which in case of
+TinuLFU is the access frequency of a data item. Storing metadata related to an
+object often results in increased memory and maintainance overhead. These
+admission and eviction policies determine the effectiveness of a cache algorithm
+for a given use-case.
+
+% Talk about LRFU in particular.
+% Read about Zipf's law and stuff in that paper.
+We will first consider schemes which do not require additional information about
+the data being stored like size or access latency in case of a cache miss. In
+this case, LRU and LFU are two of the most commonly used algorithms. It has been
+shown that.
+
+% Talk about caching for graphs CBGA and its successors.
