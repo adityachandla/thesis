@@ -191,6 +191,7 @@ In this sections, we will discuss some background research on caching and
 prefetching which would help us exploit  spatial and temporal locality to lower
 the data access latency for graph traversals.
 
+\medskip
 % Talk about traditional caching schemes in one paragraph and introduce the
 % major caching techniques.
 Any caching scheme consists of two fundamental operations: admission of
@@ -210,11 +211,27 @@ object often results in increased memory and maintainance overhead. These
 admission and eviction policies determine the effectiveness of a cache algorithm
 for a given use-case.
 
+\medskip
 % Talk about LRFU in particular.
-% Read about Zipf's law and stuff in that paper.
 We will first consider schemes which do not require additional information about
 the data being stored like size or access latency in case of a cache miss. In
 this case, LRU and LFU are two of the most commonly used algorithms. It has been
-shown that.
+shown that if the access pattern follows Zipf's law\cite{zipf1929relative}, then
+LFU outperforms LRU. However, if the access pattern has high temporal locality,
+then LRU can outperform LFU. Therefore, the choice between LRU and LFU depends
+on the underlying access pattern of the data. This choice, however, does not
+have to be binary as we can also have an LRFU cache\cite{lee2001lrfu} which
+provides us with a way to have an eviction policy which takes both recency and
+frequency into account for eviction. This algorithm subsumes both LRU and LFU
+because its functioning depends on a factor $\lambda$ which dictates the
+weightage that is given to recency versus frequency while evicting an item. As a
+result, we can tune this parameter to have the cache behave like LRU or LFU.
+Thus, with LRFU cache, we can fine-tune our eviction policy in case we do not
+have any other additional information about the items.
 
+\medskip
 % Talk about caching for graphs CBGA and its successors.
+In the last paragraph we talked about caching policies when we do not have any
+additional information about the items being stored, however, while processing
+graphs, we do have some information about the graph topology when we access a
+node's neighbours. 

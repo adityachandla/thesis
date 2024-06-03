@@ -15,18 +15,38 @@ Analytics tools like Snowflake\cite{snowflake} and RDBMSs like Neon\cite{neonPos
 for storage of underlying data. The use of these distributed storage services has not
 yet been explored for storing and querying graph data.
 
-\medskip
+\section{Research Question}
 In this paper, we provide an initial analysis of how distributed storage services can 
 be used to query large graphs. While using these distributed storage services, the primary
 issue that needs to be addressed is of latency. The latency of accessing data in a networked
 distributed system involves communication over the network which is at least three orders of
 magnitude more than accessing data from local storage. In return for this increased latency,
-we get almost unlimited throughput as read operations are distributed across a cluster 
+we get virtually unlimited throughput as read operations are distributed across a cluster 
 of thousands of physical machines if not more. Therefore, in this paper, we evaluate ways to
-reduce the latency of accessing graphs.More precisely, we will focus on the 
+reduce the latency of accessing graphs. We will focus on the 
 performance of two commonly used graph traversal algorithms: Breadth first search 
-(BFS) and Depth first search (DFS). We use these algorithms on LDBC datasets
-to provide results for multi-hop traversals. 
+(BFS) and Depth first search (DFS). More formally, the first research
+objective is as follows:
+\begin{displayquote}
+    \textbf{RO 1:} Gauge the effectiveness of caching and prefetching techniques
+    on the latency of graph access for graph traversals.
+\end{displayquote}
+
+\medskip
+Apart from reducing the latency, we will also discuss how the cost model of
+distributed storage engines is different from the traditional model of coupled
+compute and storage. For storage engines like S3, we are charged for every
+gigabyte of storage and we are charged for every request that we make on that
+storage. On the other hand, in case of an SSD/HDD storage unit, you pay for a
+certain amount of storage and there is no additional cost for accessing the
+storage. Therefore, we seek to provide a model to help users choose between one
+form of storage over the other. More formally, the second research objective is
+as follows:
+\begin{displayquote}
+    \textbf{RO 2:} Provide a cost model to help users decide whether using S3
+    instead of SSD/HDDs might be more cost effective.
+\end{displayquote}
+
 
 \section{Structure of the thesis}
 
