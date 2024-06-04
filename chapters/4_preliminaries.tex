@@ -1,3 +1,12 @@
+The purpose of this thesis is to reduce the latency of graph access in cases
+where the graph is stored on a distributed file system like AWS S3. In order to
+put this work into context, we start by providing an overview of distributed
+storage services and more details about the particular storage service which
+will be used in this thesis. Then, we provide background on the idea of
+separating compute and storage, the evolution of this idea, and its
+applicability. Finally, we describe the current literature on how others have
+approached the idea of reducing access latency by using caching algorithms.
+
 \section{Distributed storage services}\label{sec:distributedStorage}
 The idea of accessing files via the network can be traced back to the early days
 of the internet. However, the first widely used implementation of a networked
@@ -185,7 +194,7 @@ follows:
         various centrality measures\cite{klein2010centrality} which may help us 
         understand which nodes are central for a particular graph algorithm. The
         main idea is that there exist some nodes which have higher probability
-        of being accessed for while running a particular algorithm on a graph.
+        of being accessed while running a particular algorithm on a graph.
 \end{enumerate}
 In this sections, we will discuss some background research on caching and
 prefetching which would help us exploit  spatial and temporal locality to lower
@@ -234,4 +243,18 @@ have any other additional information about the items.
 In the last paragraph we talked about caching policies when we do not have any
 additional information about the items being stored, however, while processing
 graphs, we do have some information about the graph topology when we access a
-node's neighbours. 
+node's neighbours. This information can be useful if there is a high likelihood
+that the neighbours of this node will be accessed. This idea of graph aware
+caching algorithms was introduced by Aksu et al. in a paper where they
+introduced a graph aware cacing policy named Clock-based graph aware
+caching (CBGA)\cite{aksu2015graph}. Although the algorithm contain many 
+important contributions, the
+main idea of this algorithm is to expect that a node's neighbours will be
+accessed if a node is accessed. This idea helped their algorithm outperform all
+other competing cache algorithms which did not exploit the structure of the
+graph. Their idea was further extended by Bok et al.\cite{bok2020memory} where
+they added a used-cache in addition to a prefetcher cache for speeding up
+subgraph lookups. This idea helped them outperform CBGA for the task of subgraph
+matching where they were able to achieve a hit ratio of between 50\% and 65\%. 
+These contributions highlight the potential for graph aware caching for
+reducing the latency of graph access.

@@ -15,7 +15,7 @@ Analytics tools like Snowflake\cite{snowflake} and RDBMSs like Neon\cite{neonPos
 for storage of underlying data. The use of these distributed storage services has not
 yet been explored for storing and querying graph data.
 
-\section{Research Question}
+\section{Research Objectives}
 In this paper, we provide an initial analysis of how distributed storage services can 
 be used to query large graphs. While using these distributed storage services, the primary
 issue that needs to be addressed is of latency. The latency of accessing data in a networked
@@ -65,12 +65,11 @@ traversals.
 \medskip
 In Chapter-\ref{chapter:systemArchitecture}, we introduce our architecture for
 performing traversals. We start by providing a description of each component and their
-responsibilities in Section-\ref{sec:componentOverview}. After that, we describe
-the traversal queries which will be evaluated by our system in Section-\ref{sec:queryEvaluation}.
+responsibilities in Section-\ref{sec:componentOverview}. 
 Then we provide a baseline implementation which we will be useful for comparing
 the impact of the improvements made in the subsequent sections. Finally, in
-Sections-\ref{sec:graphAccess}, \ref{sec:parallelAlgorithms}, and
-\ref{sec:partitionSize}, we describe the details of our proposed architecture
+Sections-\ref{sec:graphAccess} and \ref{sec:parallelAlgorithms} 
+we describe the details of our proposed architecture
 which enables low latency traversals for large graphs.
 
 \medskip

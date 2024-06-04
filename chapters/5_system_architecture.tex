@@ -1,11 +1,133 @@
 \section{Component Overview}\label{sec:componentOverview}
-\section{Query Evaluation}\label{sec:queryEvaluation}
+Figure-\ref{fig:sysArch} contains the high level overview of the system that
+we will use for query evaluation. We will now give a brief explaination of the
+components present in this figure:
+\begin{enumerate}
+    \item \textbf{LDBC}: The Linked Data Benchmark Council(LDBC) publishes datasets
+        for various types of graph processing workloads. In this thesis, we make
+        use of the Social Network Benchmark (SNB) datasets in order to evaluate
+        the performance of our traversals.
+    \item \textbf{LDBC Converter}: The LDBC dataset are in csv format and
+        contain additional information about nodes and edges. As we will explain
+        in Section-\ref{sec:modifiedCsr}, we need the data to be in a particular
+        binary format and we do not have any use for node and edge properties.
+        This component of the system removes the unnecessary information from
+        the LDBC datasets and maps the data into the desired binary format.
+    \item \textbf{AWS S3}: Once the LDBC converter converts the data into a
+        binary format, this data is added to an S3 bucket. A `bucket' in AWS S3
+        is a container for files.
+    \item \textbf{Graph Access Service}: This service provides an interface for
+        accessing a graph stored in AWS S3. This interface provides the users of
+        this interface with the ability to get a node's neighbours by providing
+        the source node, edge label, and edge direction. This service contains
+        all the caching mechanisms that we will use to reduce the latency of
+        traversals. We will discuss this service in more detail in
+        Section-\ref{sec:graphAccess}.
+    \item \textbf{Graph Algorithm Service}: This service is responsible for
+        using the interface provided by the graph access service to perform
+        traversals and measure their performance. We discuss this component in
+        more detail in Section-\ref{sec:parallelAlgorithms}.
+\end{enumerate}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/architecture.png}
+    \caption{High Level System Architecture}
+    \label{fig:sysArch}
+\end{figure}
+
+Looking at the architecture in Figure-\ref{fig:sysArch}, it is natural to wonder
+why do we have two separate services for accessing the graph and performing
+traversals on that graph. There are two reasons for this separation: First, it
+separates the logic for accessing graphs from the logic for performing
+traversals with minimal overhead; Second, this type of architecture is
+particularly amenable to creation of a multi-tenant storage layer as used
+in the Neon database\cite{neonPostgres}. This is why we have chosen to separate
+the service responsible for accessing the graph and caching from the service
+responsible for running traversal algorithms.
 \section{Baseline Implementation}\label{sec:baseline}
 \section{Graph access service}\label{sec:graphAccess}
-\subsection{Modified CSR structure}
-\subsection{Caching}
-\subsection{Prefetching}
+\subsection{Modified CSR structure}\label{sec:modifiedCsr}
+In the baseline implementation of graph access service described in
+Section-\ref{sec:baseline}, we had to download entire files in order to access
+a node's neighbours. This approach suffers from a couple of problems which makes
+fetching inefficient and restrictive. The first problem is that we have to
+fetch and parse the information for an entire file in order to access a single
+node's neighbours which is wasteful. Furthermore, this approach hinders our
+ability to have a  higher level of granularity for better cache performance.
+Secondly, this approach makes it harder to utilize the fact that S3 replicates
+files to various servers. Due to these problems, we decided to modify the
+underlying binary format and the way we fetch a node's neighbours.
+
+\medskip
+Figure-\ref{fig:csrFormat} shows the binary format that we use for fetching a
+node's neighbour. This format can logically be divided into three layers. The
+first layer, which is always of a constant size, contains the first and last
+node identifier present in this file. The second layer, contains the byte offset
+for the first incoming edge for a node and the first outgoing edge for a node.
+Since these offsets are of a constant size and the fact that the first layer of
+the header tells us how many nodes are present in this file, we can calculate
+the size of this second layer. The third and final layer contains the edge
+information, which in our case consists of the edge label and the edge
+desitnation. This type of structure closely resembles a traditional CSR format
+except for the fact that we store both incoming and outgoing edges in the same
+array and the fact that we store byte offsets instead of array indices.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/csrFormat.png}
+    \caption{Updated CSR Format}
+    \label{fig:csrFormat}
+\end{figure}
+
+\medskip
+The aforementioned format gives us the ability to fetch a node's neighbours
+without having to download an entire file. With this modified structure, we can
+store the first layer for every file in memory and fetch the second layer of a
+file when it is first accessed. After doing so, we would be able to fetch a
+node's incoming or outgoing neighbours without any additional overhead.
+Furthermore, we can now parallelize requests to a single file which would lead
+to better throughput since these requests would likely be distributed to
+different instances within S3. As an additional benefit, we can now perform
+caching on a more granular level since we do not incur the overhead of fetching
+and parsing an entire file whenever we need to access a node's neighbours.
+
+\subsection{Caching and Prefetching}
+Figure-\ref{fig:graphAccessArch} shows the final architecture of the graph
+access service. The service consists of three basic parts:
+\begin{enumerate}
+    \item \textbf{Interfaces for external communication}: There are two 
+        components which provide an interface with external resources and are
+        colored grey in the figure. The first component, on the left,
+        exposes a gRPC interface which receives requests for accessing a node's
+        neighbours, starting traversals, and ending traversals. The second
+        component, on the right, is responsible for accessing S3. This component
+        takes a filename along with starting and ending file offsets and returns
+        the requested file content.
+    \item \textbf{Orchestration}: There are two components that help with
+        orchestration of request and are colored blue in the figure. The first
+        component is the `Request Processor' which is responsible for
+        interacting with the caches, moving data between caches, and fetching
+        data from S3 in case it is not present in the caches. The second
+        component titled `Vertex offsets' contains metadata related to the CSR
+        format that we described in Section-\ref{sec:modifiedCsr}.
+    \item \textbf{Caches}: There are two different types of caches that are used
+        in this service and are colored green in the figure. The first of these
+        components is an LRFU cache which is used to store nodes that were
+        previously accessed. The second component is a per-query prefetcher
+        which fetches the nodes that are likely to be accessed by a client in
+        the near future. The rest of this section is devoted to the description
+        of these two components.
+\end{enumerate}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/graphAccessServiceFinal.png}
+    \caption{Graph Access Service}
+    \label{fig:graphAccessArch}
+\end{figure}
+
+% TODO describe these things.
+\medskip
+The \textbf{LRFU cache} is a relatively simple 
+
 \section{Prallelizing graph algorithm service}\label{sec:parallelAlgorithms}
 \subsection{Parallel BFS implementation}
 \subsection{Parallel DFS implementation}
-\section{Optimizing partition sizes}\label{sec:partitionSize}
