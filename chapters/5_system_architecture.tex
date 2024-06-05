@@ -44,8 +44,60 @@ particularly amenable to creation of a multi-tenant storage layer as used
 in the Neon database\cite{neonPostgres}. This is why we have chosen to separate
 the service responsible for accessing the graph and caching from the service
 responsible for running traversal algorithms.
+
 \section{Baseline Implementation}\label{sec:baseline}
+Since there are no existing tools that we can use to compare our solution with,
+we present a baseline implementation to gauge the effectiveness of our caching
+techniques and algorithmic improvements that we will present in the next
+sections. The main idea of the baseline implementation is to provide the most
+straightforward way to perform traversals on a graph that is stored in AWS S3.
+
+\medskip
+As per the workflow we presented in Section-\ref{sec:componentOverview}, we
+first need to convert the graph from the LDBC dataset into a format which
+enables us to fetch parts of the graph that we need for processing. In order to
+do this, we convert the graph into an adjacency list, then we partition that
+adjacency list based on size, and then finally convert it to compressed sparse
+row (CSR) format\cite{duff1984computer}. With this partitioned CSR format stored
+in S3, our aim is to load the desired file whenever we want to fetch a node's
+neighbours.
+
+\medskip
+Figure-\ref{fig:baselineImpl} shows the design of graph access service and graph
+algorithm service for this baseline implementation. The graph algorithm service
+is responsible for performing the traversals and recording the results. This
+service uses the textbook implementation of DFS and BFS, with the only caveat
+that a node's neighbours are requested from the graph access service. The graph
+access service contains an index which maps node ranges to S3's file names. With
+this index, we can get the file name for the S3 file which contains a particular
+node's neighbours. Additionally, this service also contains an LRU cache of some
+files that were fetched from S3. The size of this cache is limited because each
+cache entry contains an entire file with adjacency information related to
+hundreds of nodes. With these components in place, whenever the graph access
+service gets a request, it first checks if that request can be served from the
+cache, if not, we fetch the file corresponding to the requested node and add
+that file to the cache.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/baseline.png}
+    \caption{Baseline Implementation}
+    \label{fig:baselineImpl}
+\end{figure}
+
+\medskip
+The approach mentioned in this section is quite straightforward but there are
+various improvements that can be done to improve the performance and to better 
+leverage the features provided by AWS S3. In the next few sections, we will
+discuss how we can improve the implementation for both the graph access service
+as well as the graph algorithm service. 
+
 \section{Graph access service}\label{sec:graphAccess}
+In this section, we first describe a modification of the CSR format in
+Section-\ref{sec:modifiedCsr} which would help us improve our cache performance.
+Then, in Section-\ref{sec:accessCachePrefetching}, we describe how we leverage
+this updated file format and employ the caching schemes mentioned in
+Section-\ref{sec:cachingDistSys}.
+
 \subsection{Modified CSR structure}\label{sec:modifiedCsr}
 In the baseline implementation of graph access service described in
 Section-\ref{sec:baseline}, we had to download entire files in order to access
@@ -90,7 +142,7 @@ different instances within S3. As an additional benefit, we can now perform
 caching on a more granular level since we do not incur the overhead of fetching
 and parsing an entire file whenever we need to access a node's neighbours.
 
-\subsection{Caching and Prefetching}
+\subsection{Caching and Prefetching}\label{sec:accessCachePrefetching}
 Figure-\ref{fig:graphAccessArch} shows the final architecture of the graph
 access service. The service consists of three basic parts:
 \begin{enumerate}
@@ -129,5 +181,27 @@ access service. The service consists of three basic parts:
 The \textbf{LRFU cache} is a relatively simple 
 
 \section{Prallelizing graph algorithm service}\label{sec:parallelAlgorithms}
+One of the main advantages of using AWS S3 is that it is able to sustain a very
+high throughput. The caching mechanisms mentioned in the previous sections
+reduce the latency for accessing a node's neighbours and mitigate expensive
+network calls to S3 in the hot-path. These components do help with reducing
+latency but they do not do anything to ensure that make use of the
+high-throughput provided by AWS S3. In order to do that, we parallelize our
+traversal algorithms. In this section, we will present parallel implementations
+of BFS and DFS that would help us speed up our traversals by utilizing the
+high-throughput of AWS S3.
+
 \subsection{Parallel BFS implementation}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/parallelBFS.png}
+    \caption{Parallel BFS}
+    \label{fig:parallelBFS}
+\end{figure}
 \subsection{Parallel DFS implementation}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/parallelDFS.png}
+    \caption{Parallel DFS}
+    \label{fig:parallelDFS}
+\end{figure}
