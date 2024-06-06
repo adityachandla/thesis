@@ -180,7 +180,7 @@ access service. The service consists of three basic parts:
 \medskip
 The \textbf{LRFU cache} is a relatively simple 
 
-\section{Prallelizing graph algorithm service}\label{sec:parallelAlgorithms}
+\section{Prallelizing traversals}\label{sec:parallelAlgorithms}
 One of the main advantages of using AWS S3 is that it is able to sustain a very
 high throughput. The caching mechanisms mentioned in the previous sections
 reduce the latency for accessing a node's neighbours and mitigate expensive
@@ -191,17 +191,184 @@ traversal algorithms. In this section, we will present parallel implementations
 of BFS and DFS that would help us speed up our traversals by utilizing the
 high-throughput of AWS S3.
 
-\subsection{Parallel BFS implementation}
+\subsection{Parallel BFS}
+Parallelizing breadth first search in relatively straightforward.
+Listing-\ref{lst:parallelBFS} contains the pseudo-code for our implementation of
+parallel BFS. This implementation contains two queues, one for the current level
+and the other for the next level of the traversal. Instead of processing the
+current level within a single thread, we launch a predefined number of workers
+which take elements from the queue at the current level in a work stealing
+fashion and add their results to the next level of the traversal. The addition
+of nodes to the next level as well as to the set of seen nodes needs to be
+synchronized in accordance with the threading model of the language of
+implementation.
+\begin{lstlisting}[caption={Parallel BFS}, label={lst:parallelBFS}, captionpos=b, language=Python]
+def ParallelBFS(startNode: nodeId, edgesToFollow: list[Edge]) -> list[nodeId] {
+    startQueue = Queue[nodeId](startNode)
+    for edge in edgesToFollow {
+        nextLevelQueue = Queue[nodeId]()
+        seen = Set[nodeId]()
+        for i = 0; i < MAX_WORKERS; i++ {
+            ## Use language provided utility to launch BFSWorker.
+            launch_worker(startQueue, nextLevelQueue, seen, edge)
+        }
+        await_completion()
+
+        startQueue = nextLevelQueue
+    }
+
+    return startQueue
+}
+
+## Operations on input, output, and seen are synchronized between
+## workers. 
+def BFSWorker(input, output: Queue[nodeId], seen: Set[nodeId], edge: Edge) {
+    while (input.hasMoreElements()) {
+        toProcess = input.Poll()
+        neighbours = fetchNeighbours(toProcess, edge)
+        for neighbour in neighbours {
+            if neighbour not in seen {
+                seen.add(neighbour)
+                output.add(neighbour)
+            }
+        }
+    }
+}
+\end{lstlisting}
+Figure-\ref{fig:parallelBFS} contains an example of how this algorithm would
+work for a simple tree like graph shown on the left side of the figure. The
+figure also contain three workers that are colored green, blue, and red.
+This figure shows three iterations of the algorithm along with how the
+distribution of work might take place. We now describe each of these three
+iterations:
+\begin{enumerate}
+    \item \textbf{Iteration 1}: In the first iteration, where we only have a
+        single node, this node gets assigned to one of the workers at
+        random. In this case it gets assigned to the green worker. At this
+        stage, the green worker fetches the neighbours of this node and adds
+        them to a shared set which will be used as the starting point for the
+        next iteration. In this case, the worker adds nodes 2,3,4, and 5 to this
+        shared set.
+    \item \textbf{Iteration 2}: In this iteration, the nodes from the shared set
+        of the previous iteration are distributed among all three workers. Just
+        like the previous iteration, every worker fetches the neighbours of the
+        nodes assigned to them and adds the result to a shared set. In this
+        iteration, nodes 2 and 3, which are assigned to different workers, try
+        to add the node 7. This is the reason why we need a shared set,
+        otherwise, we may end up processing node 7 twice in the next iteration.
+    \item \textbf{Iteration 3}: Just like the previous iteration, the nodes from
+        the shared set are distributed across workers. Subsequently, these
+        workers add the neighbouring nodes of their assigned nodes to the shared
+        set.
+\end{enumerate}
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/parallelBFS.png}
+    \includegraphics[width=0.75\textwidth]{figures/parallelBFS.png}
     \caption{Parallel BFS}
     \label{fig:parallelBFS}
 \end{figure}
-\subsection{Parallel DFS implementation}
+
+\subsection{Parallel DFS}
+In this section, we describe our approach for parallelizing depth first search.
+Before we begin our description, it is important to note why a strategy similar
+to the one described in the previous section would not result in equal
+allocation of work. If we simply delegate the task on performing DFS on a node's
+neighbours to different worker threads, then it is possible that some worker
+threads might terminate significantly earlier than others. This is because the
+number of nodes that can be explored from a given node might vary significantly
+from one node to the other. Let us take the example of traversing a social
+network graph where we start with a single person and find people connected to
+this person till a certain depth. If the starting person has two friends `A' and
+`B', let us assume that `A' has no friends while `B' is a celebrity and has many
+friends. In this case, if we assign the work of perfroming DFS from `A' to one
+worker and the work of performing DFS from `B' to another worker, we would end
+up with an uneven distribution of work. This is because performing DFS on `A'
+would require no further processing while the DFS on `B' is likely to go on for
+quite a few iterations. Due to this problem, we need a better way to parallelize
+depth first search.
+
+\medskip
+The main idea of our approach is to dynamically rebalance the amount of work
+being done by each worker in every iteration. One way to perform this dynamic
+rebalancing was suggested by Rao et al.\cite{rao1987parallel} where they suggest
+a work stealing algorithm in which a worker `steals' nodes from other workers'
+stacks when its own stack becomes empty. Our algorithm, as shown in 
+Listing-\ref{lst:parallelDFS} works on a similar principle. The one notable
+difference is that instead of stealing work, every worker proactively assigns
+work to different workers after fetching a node's neighbours which ensures that
+the difference between the amount of work is minimized. Another important point
+to note about the implementation is the structure of the data structure that
+stores seen nodes. Instead of simply storing nodeIds, we store nodeId along with
+the level at which a node was seen. This is done to ensure that for a traversal
+with max depth `d', we return all the nodes that can be reached by taking `d'
+steps from the source node.
+\begin{lstlisting}[caption={Parallel DFS}, label={lst:parallelDFS}, captionpos=b, language=Python]
+def ParallelDFS(startNode: nodeId, edgesToFollow: list[Edge]) -> list[nodeId] {
+    stack = Stack[nodeId, level]((startNode, 0))
+    seen = Set[nodeId, level]()
+    result = Collection[nodeId]
+
+    while stack.isNotEmpty() {
+        toProcess := stack.pop()
+        ## Termination condition
+        if toProcess.level == edgesToFollow.size() {
+            result.add(toProcess.nodeId)
+            continue
+        }
+        ## Fetch the neighbours according to the edge that should be followed at
+        ## this level.
+        nextLevel = toProcess.level+1
+        neighbours = fetchNeighbours(toProcess.nodeId, edgesToFollow[toProcess.level])
+        neighbours = filterSeen(neighbours, seen, nextlevel)
+
+        numWorkersAvailable = getAvailableWorkers()
+        ## Equally partition the neighbours into 'numWorkersAvailable+1' lists
+        neighbour_partitions = divide_work(neighbours, numWorkersAvailable)
+
+        for i = 0; i < numWorkersAvailable; i++ {
+            launch_worker(neighbour_partitions[i], seen, result)
+        }
+    }
+    await_completion()
+
+    return result
+}
+
+## Filter out nodes that we have seen at a particular level.
+def filterSeen(nodes: list[nodeId], seen: Set[nodeId, level], level: level) -> list[nodeId] {
+    res = list[nodeId]()
+    for node in nodes {
+        if (node, level) not in seen {
+            seen.add((node,level))
+            res.add((node,level))
+        }
+    }
+    return res
+}
+
+## This function mimics the original implementation with the only change being
+## that the seen set is shared and that this method has its own stack.
+def DFSWorker(nodes: list[(nodeId,level)], seen:Set[nodeId,level], res: list[nodeId]) {
+    workerStack = Stack[nodeId, level](nodes)
+
+    while stack.isNotEmpty() {
+        ## Processing logic same as the parallelDFS function
+    }
+}
+\end{lstlisting}
+
+Figure-\ref{fig:parallelDFS} shows an example implementation of how this
+depth first search would work for an example graph. In this figure, we only have
+two worker threads, colored green and blue. We now describe the three iterations
+shown in the figure:
+\begin{enumerate}
+    \item \textbf{Iteration 1}:
+    \item \textbf{Iteration 2}:
+    \item \textbf{Iteration 3}:
+\end{enumerate}
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/parallelDFS.png}
+    \includegraphics[width=0.75\textwidth]{figures/parallelDFS.png}
     \caption{Parallel DFS}
     \label{fig:parallelDFS}
 \end{figure}
