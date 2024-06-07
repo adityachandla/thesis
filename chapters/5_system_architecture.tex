@@ -357,14 +357,42 @@ def DFSWorker(nodes: list[(nodeId,level)], seen:Set[nodeId,level], res: list[nod
 }
 \end{lstlisting}
 
-Figure-\ref{fig:parallelDFS} shows an example implementation of how this
-depth first search would work for an example graph. In this figure, we only have
+Figure-\ref{fig:parallelDFS} shows an example of how this implementation works.
+In this figure, we only have
 two worker threads, colored green and blue. We now describe the three iterations
 shown in the figure:
 \begin{enumerate}
-    \item \textbf{Iteration 1}:
-    \item \textbf{Iteration 2}:
-    \item \textbf{Iteration 3}:
+    \item \textbf{Iteration 1}: In the first iteration, the green worker thread
+        processes the node 1. Before the start of this
+        algorithm, the tuple $(1,0)$ is added to the shared node-level
+        set. This indicates that node 1 was seen at level 0. After
+        fetching the neighbours of the first node, we check if there are any
+        worker threads available to take over the work for some nodes. We find
+        that the blue worker is indeed idle and therefore, some of the
+        neighbours can be added to its local stack. Here we assume that out of
+        the three nodes, two are added to the stack of the green worker and one
+        is added to the stack of the blue worker. During this partitioning, we
+        also add the newly visited nodes to the shared set. 
+    \item \textbf{Iteration 2}: In the second iteration, the green worker
+        explores the neighbours of node 2 and the blue worker
+        explores the neighbours of node 4. After exploring the
+        neighbouring nodes, both of the workers check if some of the newly
+        explored nodes can be added to another worker's stack. However, since
+        both workers are busy, all the nodes are added to their own stacks.
+        Finally, like in previous iteration, the newly visited nodes are added
+        to the shared set. Notice that there is a race condition between the
+        green worker and the blue worker to add node 7. In order to ensure that
+        this node is not processed twice at the same level, the workers need to
+        check if node 7 has been visited at depth of 2. If it has not been
+        visited, then the worker will add that to the shared set and then add it
+        to its stack. With this mechanism, only one of the two workers will be
+        able to take responsibility for processing this node.
+    \item \textbf{Iteration 3}: During the final iteration, the green worker
+        will process node 5 and the blue worker will process node 7. All the
+        nodes that have already been seen are also added to the shared set.
+        After this stage, the two workers will go on to process nodes 9 and 10.
+        Finally, the green worker will process node 3 but since all its
+        neighbours have already been processed, the algorithm will terminate.
 \end{enumerate}
 \begin{figure}[ht]
     \centering
