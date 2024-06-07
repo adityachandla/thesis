@@ -1,19 +1,68 @@
-In a recent survey titled `Ubiquity of large graphs'\cite{sahu2017ubiquity}, the
-authors noted that the size of graphs being used in both academia and industry
-is increasing. Although this survey found that it was common for graphs to have
-tens of billions of edges, it also found that scalability was the primary
-concern of all the participants surveyed\cite{sahu2017ubiquity}. In this thesis,
-we evaluate one way to alleviate this concern of scalability by decoupling
-storage of base graph from the query evaluation.
+% What do I want to say:
+% Start with why graphs are useful 
+% Then talk about graph databases 
+The size of graphs being used in both academia and industry is increasing at a
+rapid rate, and as a result it has become common for graphs to have tens of
+billions edges\cite{sahu2017ubiquity}. Furthermore, this trend is expected to
+continue as the amount of data collected and processed increases. A recent
+survey shows that scalability is the primary concern of graph database
+users\cite{sahu2017ubiquity}. As this scale
+increases, decoupling storage from graph query evaluations using distributed
+cloud storage services like AWS S3\cite{awsS3} may prove to be
+more cost efficient. These systems provide durable data storage, high
+throughput, and a pay-as-you-go model where you only pay for the data you store
+and the number of requests you make. Making use of these characteristics would
+enable graph databases to provide more flexible scaling and to alleviate 
+the costs related to redundancy. Therefore, it is worthwhile to explore
+the feasiblity of such database architectures.
 
 \medskip
-Today, all major cloud providers have a distributed cloud storage offering,
-Google cloud platform offers Google cloud storage\cite{gcpStorage}, Azure offers
-Azure Blob storage\cite{azureStorage}, and AWS offers Simple Storage Service or 
-S3\cite{awsS3}. These distributed storage services are already used by Big Data
-Analytics tools like Snowflake\cite{snowflake} and RDBMSs like Neon\cite{neonPostgres} 
-for storage of underlying data. The use of these distributed storage services has not
-yet been explored for storing and querying graph data.
+The idea of having separate storage and compute has been studied in the context
+of relational databases. In 2008, Brantner et al\cite{brantner2008building}
+described how a relational database could be built on top of AWS S3 while still
+providing atomicity, isolation, and durability. Snowflake\cite{snowflake} was
+one of the first database which fully realized the idea of having totally
+separate storage and compute layers. This idea was adopted by other databases
+like AWS Aurora\cite{verbitski2017amazon} in 2017 and more recently by
+Neon\cite{neonPostgres}. Despite the existance of so many relational databases
+which have separate storage and compute layers, this idea remains unexplored for
+native graph databases.
+
+\medskip
+Although there are many native graph databases which enable scaling out
+using sharding\cite{besta2023demystifying}, the compute and storage are
+still tied together. Unlike such architectures, this paper explores an
+architecture where storage of raw graph is delegated to a distributed cloud
+store and memory of compute instances is only used to process queries and store
+intermediate results.
+
+\medskip
+There are two main challenges when considering databases with separate compute
+and storage: Distribution transaction management and access latency. The first
+challenge, although more intricate, has been studied in the context of
+relational databases\cite{brantner2008building} and can be extended for other
+systems which follow this general architecture. Therefore, in this paper, we
+explore how we can reduce the access latency for graph specific operations in
+the contex of graphs stored on distributed file systems.
+
+\medskip
+In order to study the impact of our techniques on the access latency, we use
+Breadth first search (BFS) and Depth first search (DFS) as two algorithms to
+benchmark our performance. These two traversal algorithms are some of the most
+commonly used algorithms for performing graph traversals\cite{sahu2017ubiquity}.
+These traversal algorithms will have a bounded depth and therefore will only
+access a small part of the graph. On the spectrum of graph algorithms from OLTP
+to OLAP as described by Besta et al.\cite{besta2023demystifying}, these 
+traversal algorithms lie
+more on the OLTP side as the portion of graph explored by a single traversal
+would be much smaller than the size of the graph.
+
+\medskip
+In order to minimize the latency, we will first propose a graph storage format which
+would help us gain granular access over the graph stored in AWS S3. Then, we
+would extend some of the existing caching techniques to lower the latency of
+graph access. Finally, we will describe the cases where it is viable and more
+cost efficient to use an architecture that separates storage from compute.
 
 \section{Research Objectives}
 In this paper, we provide an initial analysis of how distributed storage services can 

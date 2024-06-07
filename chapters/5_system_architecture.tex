@@ -176,9 +176,88 @@ access service. The service consists of three basic parts:
     \label{fig:graphAccessArch}
 \end{figure}
 
-% TODO describe these things.
 \medskip
-The \textbf{LRFU cache} is a relatively simple 
+The first major component of our cache in the \textbf{LRFU
+cache}\cite{lee2001lrfu}. As mentioned in Section-\ref{sec:cachingDistSys}, the
+main idea of this cache is to take both recency and frequency into account while
+making the decision about which item to evict from the cache. While initializing
+this cache, we make a decision about how much weightage should be given to an
+objects recency versus its frequency. Note that unlike perfect-LFU schemes, we
+only store the frequency of the elements present in the cache. After
+initializing the cache, it maintains a heap of elements where each element is
+assigned a score based on the last time it was accessed along with its
+frequency. The key to maintaining this heap is the realization that the relative
+ordering of the heap remains constant if none of the elements are accessed. This
+is because the degradation of score as a result of ageing happens at the same
+rate for every element. This means that only a change in frequency can change
+the relative ordering of elements, and since the frequency only changes when an
+object is accessed, we only need to change the position of the accessed node
+within the heap. This enables us to perform access and insertion operations in
+$\mathcal{O}(\log(n))$ time. Although, a simple LRU cache implementations have an
+access and insertion time complexity of $\mathcal{O}(1)$,  this cache provides 
+us with a good tradeoff between time complexity and flexibility for 
+different workloads. We will talk more about the empirical evidence supporting
+our choice in the next chapter.
+
+\medskip
+The next component, \textbf{the Prefetcher}, is inspired by the work done
+by Bok et al.\cite{bok2020memory}. This component fetches the neighbours of
+nodes that were accessed by a particular traversal. Every time a node's
+neighbours are fetched, these neighbours are added to the `Prefetch Queue'. The
+elements from this prefetch queue are read by the worker threads that are
+attached to every prefetcher cache. These worker threads send our requests to
+fetch the neighbours of nodes in the prefetch queue and add the nodes to the
+`In-flight queue' while they wait for the response. Finally, once the neighbours
+for a node are available, they are added to the prefetcher cache which is a
+standard LRU cache. We will now discuss some of the design choices that we have
+made for this cache.
+
+\medskip
+First, if there are multiple traversals happening, we would create a separate
+prefetcher for each traversal. This choice ensure that there is minimal
+interferance on the performance of a traversal depending on other traversals
+that may be happening. This comes with the added cost of having more worker
+threads. However, a green-thread model or asynchronous programming can help
+mitigate this issue to a large extent. 
+
+\medskip
+Apart from separate prefetcher caches, we also have an `In-flight Queue' within
+each prefetcher. This is useful because of the time gap between sending a
+request and getting a response. This time, as we will see in the next chapter,
+is an order of magnitude greater than the time scale at which the graph access
+service and the graph algorithm service work. Therefore, it makes sense to have
+a small amount of extra memory to ensure that if a request is already in
+progress, we do not make a duplicate request which would almost always take
+longer to execute. 
+
+\medskip
+Finally, we note that the size of the prefetch queue is finite. Therefore, we
+need to have some strategy to handle the case when this prefetch queue is full.
+We argue that this strategy needs to be different for both BFS and DFS. This is
+due to the relevance of nodes that are added to this prefetch queue. The node at
+the front of the queue in BFS will be accessed earlier than the neighbours of a
+node that we are trying to add to the queue. However, in case of DFS, the
+opposite is true because the node that we are trying to add is likely the node
+at the top of the stack and would be accessed next. This leads us to having two
+different strategies for dealing with a full prefetcher queue for BFS and DFS:
+\begin{enumerate}
+    \item \textbf{BFS}: In case of BFS, the prefetcher queue behaves like a
+        queue data structure and if the queue is full, the newer elements are
+        discarded.
+    \item \textbf{DFS}: In case of DFS, the prefetcher queue behaves like a
+        stack data structure and if the queue is full, the newer elements
+        are added to the top of the stack and the elements at the bottom of the
+        stack are discarded.
+\end{enumerate}
+
+\bigskip
+In this section, we described a file format that enables us to perform caching
+at a more granular level, and we described how this granular caching helps us
+design caches that may be better suited for masking S3's access latency.
+In the next section, we turn our
+attention to graph algorithm service where we will modify our traversals to
+better fit the abilities of S3.
+
 
 \section{Prallelizing traversals}\label{sec:parallelAlgorithms}
 One of the main advantages of using AWS S3 is that it is able to sustain a very
