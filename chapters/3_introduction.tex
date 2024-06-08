@@ -2,38 +2,38 @@
 % Start with why graphs are useful 
 % Then talk about graph databases 
 The size of graphs being used in both academia and industry is increasing at a
-rapid rate, and as a result it has become common for graphs to have tens of
-billions edges\cite{sahu2017ubiquity}. Furthermore, this trend is expected to
+rapid rate, and as a result, it has become common for graphs to have tens of
+billions of edges\cite{sahu2017ubiquity}. Furthermore, this trend is expected to
 continue as the amount of data collected and processed increases. A recent
 survey shows that scalability is the primary concern of graph database
 users\cite{sahu2017ubiquity}. As this scale
 increases, decoupling storage from graph query evaluations using distributed
-cloud storage services like AWS S3\cite{awsS3} may prove to be
-more cost efficient. These systems provide durable data storage, high
+cloud storage services like AWS S3\cite{awsS3} may be
+more cost-efficient. These systems provide durable data storage, high
 throughput, and a pay-as-you-go model where you only pay for the data you store
 and the number of requests you make. Making use of these characteristics would
-enable graph databases to provide more flexible scaling and to alleviate 
+enable graph databases to provide more flexible scaling and alleviate 
 the costs related to redundancy. Therefore, it is worthwhile to explore
-the feasiblity of such database architectures.
+the feasibility of such database architectures.
 
 \medskip
 The idea of having separate storage and compute has been studied in the context
 of relational databases. In 2008, Brantner et al\cite{brantner2008building}
 described how a relational database could be built on top of AWS S3 while still
 providing atomicity, isolation, and durability. Snowflake\cite{snowflake} was
-one of the first database which fully realized the idea of having totally
+one of the first databases which fully realized the idea of having
 separate storage and compute layers. This idea was adopted by other databases
 like AWS Aurora\cite{verbitski2017amazon} in 2017 and more recently by
-Neon\cite{neonPostgres}. Despite the existance of so many relational databases
+Neon\cite{neonPostgres}. Despite the existence of so many relational databases
 which have separate storage and compute layers, this idea remains unexplored for
 native graph databases.
 
 \medskip
-Although there are many native graph databases which enable scaling out
+Although there are many native graph databases that enable scaling out
 using sharding\cite{besta2023demystifying}, the compute and storage are
 still tied together. Unlike such architectures, this paper explores an
-architecture where storage of raw graph is delegated to a distributed cloud
-store and memory of compute instances is only used to process queries and store
+architecture where storage of raw graphs is delegated to a distributed cloud
+store and, memory of compute instances is only used to process queries and store
 intermediate results.
 
 \medskip
@@ -41,40 +41,40 @@ There are two main challenges when considering databases with separate compute
 and storage: Distribution transaction management and access latency. The first
 challenge, although more intricate, has been studied in the context of
 relational databases\cite{brantner2008building} and can be extended for other
-systems which follow this general architecture. Therefore, in this paper, we
-explore how we can reduce the access latency for graph specific operations in
-the contex of graphs stored on distributed file systems.
+systems that follow this general architecture. Therefore, in this paper, we
+explore how to reduce the access latency for graph-specific operations in
+the context of graphs stored on distributed file systems.
 
 \medskip
-In order to study the impact of our techniques on the access latency, we use
-Breadth first search (BFS) and Depth first search (DFS) as two algorithms to
-benchmark our performance. These two traversal algorithms are some of the most
+To study the impact of our techniques on access latency, we use
+Breadth-first search (BFS) and Depth-first search (DFS) as two algorithms to
+benchmark our performance. These two traversal algorithms are the most
 commonly used algorithms for performing graph traversals\cite{sahu2017ubiquity}.
-These traversal algorithms will have a bounded depth and therefore will only
+These traversal algorithms will have a bounded depth and thus only
 access a small part of the graph. On the spectrum of graph algorithms from OLTP
 to OLAP as described by Besta et al.\cite{besta2023demystifying}, these 
 traversal algorithms lie
-more on the OLTP side as the portion of graph explored by a single traversal
+more on the OLTP side as the portion of the graph explored by a single traversal
 would be much smaller than the size of the graph.
 
 \medskip
-In order to minimize the latency, we will first propose a graph storage format which
-would help us gain granular access over the graph stored in AWS S3. Then, we
+To minimize the latency, we will first propose a graph storage format that
+would provide a gain granular access over the graph stored in AWS S3. Then, we
 would extend some of the existing caching techniques to lower the latency of
 graph access. Finally, we will describe the cases where it is viable and more
-cost efficient to use an architecture that separates storage from compute.
+cost-efficient to use an architecture that separates storage from compute.
 
 \section{Research Objectives}
 In this paper, we provide an initial analysis of how distributed storage services can 
 be used to query large graphs. While using these distributed storage services, the primary
-issue that needs to be addressed is of latency. The latency of accessing data in a networked
+issue that needs to be addressed is latency. The latency of accessing data in a networked
 distributed system involves communication over the network which is at least three orders of
 magnitude more than accessing data from local storage. In return for this increased latency,
 we get virtually unlimited throughput as read operations are distributed across a cluster 
 of thousands of physical machines if not more. Therefore, in this paper, we evaluate ways to
 reduce the latency of accessing graphs. We will focus on the 
-performance of two commonly used graph traversal algorithms: Breadth first search 
-(BFS) and Depth first search (DFS). More formally, the first research
+performance of two commonly used graph traversal algorithms: Breadth-first search 
+(BFS) and Depth-first search (DFS). More formally, the first research
 objective is as follows:
 \begin{displayquote}
     \textbf{RO 1:} Gauge the effectiveness of caching and prefetching techniques
@@ -83,12 +83,12 @@ objective is as follows:
 
 \medskip
 Apart from reducing the latency, we will also discuss how the cost model of
-distributed storage engines is different from the traditional model of coupled
+distributed storage engines differs from the traditional model of coupled
 compute and storage. For storage engines like S3, we are charged for every
 gigabyte of storage and we are charged for every request that we make on that
-storage. On the other hand, in case of an SSD/HDD storage unit, you pay for a
+storage. On the other hand, in the case of an SSD/HDD storage unit, you pay for a
 certain amount of storage and there is no additional cost for accessing the
-storage. Therefore, we seek to provide a model to help users choose between one
+storage. Therefore, we aim to provide a model to help users choose between one
 form of storage over the other. More formally, the second research objective is
 as follows:
 \begin{displayquote}
@@ -96,55 +96,72 @@ as follows:
     instead of SSD/HDDs might be more cost effective.
 \end{displayquote}
 
+\section{Research contributions}
+In line with the research objectives mentioned in the previous section, the 
+unique contributions of this research are as follows:
+\begin{enumerate}
+    \item We provide the details of how we can perform traversals on large
+        graphs using a distribution cloud storage service. The architecture for
+        separating compute and storage was already proposed by Brantner et
+        al.\cite{brantner2008building} in 2008, however, there has been no
+        research on the viability of this architecture for graph databases. We
+        answer this question in Chapter \ref{chapter:systemArchitecture} and
+        discuss its performance in Chapter \ref{chapter:evaluation}.
+    \item We provide a cost model to enable users, and developers of graph
+        databases to check if using S3 or similar tools would fit their use case.
+        The authors are not aware of any research which answers this question.
+        We answer this question in Section \ref{sec:useCases}.
+\end{enumerate}
+
 
 \section{Structure of the thesis}
 
 \medskip
-In Chapter-\ref{chapter:preliminaries}, we provide the necessary background for
-this thesis. In Section-\ref{sec:distributedStorage} we talk about the
+Chapter \ref{chapter:preliminaries}, provides the necessary background for
+this thesis. Section \ref{sec:distributedStorage} talks about the
 history, architecture, and characteristics of distributed storage systems. We
 also give a brief overview of the capabilities of AWS S3, which is the service
-that we use in this thesis. Then,
-in Section-\ref{sec:serverlessArch}, we discuss the advantages of database
-architecutres which separate compute and storage. Finally, in
-Section-\ref{sec:cachingDistSys} we discuss the caching and prefetching
-strategies that we employ in this thesis to lower the latency of graph
+we use in this thesis. Then
+Section \ref{sec:serverlessArch} discusses the advantages of database
+architecutres which separate compute and storage. Finally, 
+Section \ref{sec:cachingDistSys} discusses the caching and prefetching
+strategies that were employed in this thesis to lower the latency of graph
 traversals.
 
 \medskip
-In Chapter-\ref{chapter:systemArchitecture}, we introduce our architecture for
-performing traversals. We start by providing a description of each component and their
-responsibilities in Section-\ref{sec:componentOverview}. 
-Then we provide a baseline implementation which we will be useful for comparing
-the impact of the improvements made in the subsequent sections. Finally, in
-Sections-\ref{sec:graphAccess} and \ref{sec:parallelAlgorithms} 
-we describe the details of our proposed architecture
-which enables low latency traversals for large graphs.
+Chapter \ref{chapter:systemArchitecture}, introduces our architecture for
+performing traversals. We start by providing a description of each component and
+its responsibilities in Section \ref{sec:componentOverview}. 
+Then Section \ref{sec:baseline} provides a baseline implementation which will be useful for comparing
+the impact of the improvements made in the subsequent sections. Finally, 
+Sections \ref{sec:graphAccess} and \ref{sec:parallelAlgorithms} 
+describe the details of our proposed architecture
+which enables low-latency traversals for large graphs.
 
 \medskip
-In Chapter-\ref{chapter:evaluation}, we present the results of the
-implementation of the proposed system architecture. We begin this chapter by
+In Chapter \ref{chapter:evaluation}, we present benchmarks showcasing the
+effectiveness of our implementation and the underlying system architecture. We begin this chapter by
 comparing the performance with the baseline solution in
-Section-\ref{sec:cmpBaseline}. Then in Section-\ref{sec:cmpOtherTools}, we
+Section \ref{sec:cmpBaseline}. Then in Section \ref{sec:cmpOtherTools}, we
 compare the performance of our solution with Neo4j and Apache Flink. This
 section highlights various characteristics of different types of tools(GDBMS,
 RDBMS, Big Data tools, and Custom Solutions) and the areas in which they 
 are suitable. 
 
 \medskip
-In Chapter-\ref{chapter:discussion}, we elucidate the reasoning for various choices
+Chapter \ref{chapter:discussion} elucidates the reasoning for various choices
 made throughout the thesis.
-In Section-\ref{sec:altArchitectures} we discuss other possible architectures for
+Section \ref{sec:altArchitectures} discusses other possible architectures for
 performing traversals on large graphs using S3 and their advantages and
-disadvantages over the proposed architecture. Then, in
-Section-\ref{sec:useCases}, we discuss the use cases where this architecture
-can be more cost efficient and flexible compared to other tools and where users
-would be better off avoiding this architecture. Finally, in
-Section-\ref{sec:threats}, we consider the threats to the credibility of this
+disadvantages over the proposed architecture. Then,
+Section \ref{sec:useCases} discusses the use cases where this architecture
+can be more cost-efficient and flexible compared to other tools and where users
+would be better off avoiding this architecture. Finally, 
+Section \ref{sec:threats} considers the threats to the credibility of this
 work.
 
 \medskip
-Finally, in Chapter-\ref{chapter:conclusions}, we conclude the thesis and
-suggest possible directions for future work. This section contains information
+Finally, Chapter \ref{chapter:conclusions} concludes the thesis and
+suggests possible directions for future work. This section contains information
 about how we may be able to extend this work to reach a point where we have a
 fully functioning graph database whose storage resides in S3.
