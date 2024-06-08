@@ -10,30 +10,30 @@ approached the idea of reducing access latency by using caching algorithms.
 \section{Distributed storage services}\label{sec:distributedStorage}
 The idea of accessing files via the network can be traced back to the early days
 of the internet. However, the first widely used implementation of a networked
-filesystem was developed by SUN Microsystems\cite{nfs1986}. Their implementation
-is widely reffered to as the networked filesystem(NFS). Their implementation
-provided users with the ability to mount a filesystem present on a remote
+file-system was developed by SUN Microsystems\cite{nfs1986}. Their implementation
+is widely referred to as the networked file-system(NFS). Their implementation
+provided users with the ability to mount a file-system present on a remote
 machine. However, this system did not provide any distribution transparency as
 the users had to be aware of where and how each file is stored on remote
 machines. 
 
 \medskip
-The first widely used implementation of a distributed filesystem is considered
-to be the Hadoop Distributed Filesystem (HDFS)\cite{shvachko2010hadoop}. This
-implementation provided distribution transparency and consistency gaurantees on
-various operations on the files stored in HDFS. This implemnetation was inspired
-by the Google Filesystem\cite{ghemawat2003google} which was developed by Google
+The first widely used implementation of a distributed file-system is considered
+to be the Hadoop Distributed File-system (HDFS)\cite{shvachko2010hadoop}. This
+implementation provided distribution transparency and consistency guarantees on
+various operations on the files stored in HDFS. This implementation was inspired
+by the Google File-system\cite{ghemawat2003google} which was developed by Google
 in 2003 almost seven years before HDFS.
 
 \medskip
-Although filesystems like HDFS were widely used, filesystems like AWS
+Although file-systems like HDFS were widely used, file-systems like AWS
 S3\cite{awsS3} provided an additional feature of being multi-tenant. In other
-words, with filesystems like AWS S3, a user could reap the benefits of a
-distributed filesystem without having to manage or pay for an entire cluster.
+words, with file-systems like AWS S3, a user could reap the benefits of a
+distributed file-system without having to manage or pay for an entire cluster.
 The cost of managing, scaling, and maintaining the distributed cluster was
 delegated to cloud providers like AWS. Now, users could pay for the amount of
 data that they store, and the number of requests that they make to their data.
-This has enabled the usage of such distributed filesystems in applications like
+This has enabled the usage of such distributed file-systems in applications like
 video streaming, database storage\cite{snowflake}, web content 
 delivery, and backup storage.
 
@@ -48,10 +48,10 @@ delivery, and backup storage.
 The exact architecture of AWS S3 or any similar service provided by
 competing cloud providers is not known, however, we can glean some information
 about S3 based on
-how other distributed filesystems were designed. We will explain some basic ideas
+how other distributed file-systems were designed. We will explain some basic ideas
 related to AWS S3 using Figure-\ref{fig:distFileStore}. Let us assume we need to
 store four files in AWS S3. In order to do that, we first create a storage unit
-called a `bucket' which is similar to a directory in a filesystem. After
+called a `bucket' which is similar to a directory in a file-system. After
 uploading our files to this bucket, the files get replicated over the entire AWS S3 cluster in
 that particular region. Figure-\ref{fig:distFileStore} assumes that this cluster
 has a replication factor of two and therefore every file is stored on two
@@ -63,16 +63,16 @@ saved on two different servers. For simplicity, the figure shows that users make
 direct requests to the physical machines containing these files, however, in
 reality they all send requests to a single endpoint and their requests are then
 redirected to a server based on some load balancing scheme. In later chapters,
-we will use this abstract model of a distributed filesystem to argue about the
+we will use this abstract model of a distributed file-system to argue about the
 applicability of various techniques.
 
 \medskip
 Apart from the basic understanding of AWS S3 as it related to a distributed
-filesystem, we also want to draw the reader's attention to the following
+file-system, we also want to draw the reader's attention to the following
 characteristics of AWS S3 as mentioned in its documentation:
 \begin{enumerate}
     \item \textbf{Throughput SLA}: At the time of writing this paper, AWS
-        gaurantees that S3 can handle at least 5500 requests per object stored
+        guarantees that S3 can handle at least 5500 requests per object stored
         in a bucket. Note that there is no restriction on the total number of
         objects that can be stored in a bucket.
     \item \textbf{Storage Classes}: S3 offers various storage classes that have
@@ -86,11 +86,11 @@ characteristics of AWS S3 as mentioned in its documentation:
         \$0.0004/1k requests. However, the storage cost for the lower latency
         `Express One Zone' storage type is higher with \$0.16/GB but the cost of making
         requests is lower at \$0.0002/1k requests. 
-    \item \textbf{Artificial subdirectories}: Although AWS CLI and other tools
+    \item \textbf{Artificial sub-directories}: Although AWS CLI and other tools
         provide the capability to upload and navigate a bucket like a directory,
         but the underlying architecture only supports having files inside a
         bucket. Therefore, if you have a folder `f1' with two files `one' and
-        `two', unlike a filesystem, the bucket would only contain two files
+        `two', unlike a file-system, the bucket would only contain two files
         namely: `f1/one' and `f1/two'. The name of the folder is simply
         prepended to the file names.
     \item \textbf{Hashing object names}: In order to decide which partitions an
@@ -130,7 +130,7 @@ your databases uses and the compute resources that were used in a fixed amount
 of time. In this model, the users simply have to define the minimum and maximum
 compute resources that the database can use and the databases scales according
 to the load. Note that the definition of serverless database does not
-neccessitate separation between compute and storage and there are indeed
+necessitate separation between compute and storage and there are indeed
 databases like CockroachDB\cite{taft2020cockroachdb} which offer a serverless
 model although the underlying architecture couples storage and compute together.
 Therefore, although separating compute and storage may be amenable to a
@@ -160,18 +160,18 @@ Separating compute and storage in databases often comes at the cost of increased
 latency. This latency is a result of the network communication between the
 storage layer and compute layer that needs to take place to complete any
 database operation. Although the throughput of networks has massively increased
-in the past few years (AWS offers instances with upto 200 Gbps bandwidth), the
+in the past few years (AWS offers instances with up to 200 Gbps bandwidth), the
 latency of network communication is limited by the speed of light. Therefore, a
 database with a local SSD containing all the base data will always be faster
 than a database whose storage needs to be accessed over a network. The actual
 difference between performance depends on the physical distance between storage
-and compute nodes. If the entire deployment is in a single datacenter, the
+and compute nodes. If the entire deployment is in a single data-center, the
 latency is around 500$\mu$s which is still around 10 times higher than access latency
-for an SSD\cite{jiang2021fusionraid}. This advantage becomes less pronnounced in
+for an SSD\cite{jiang2021fusionraid}. This advantage becomes less pronounced in
 distributed databases with coupled storage and compute since they may also require
 some communication between instances in order to respond to user queries.
 Although there are various caching and prefetching mechanisms to reduce latency
-for databases with separte storage and compute, there still remain cases where
+for databases with separate storage and compute, there still remain cases where
 coupled storage and compute yields lower latencies.
 
 
@@ -216,7 +216,7 @@ data in case of a cache miss. However, there do exist more sophisticated
 admission algorithms like TinyLFU\cite{einziger2017tinylfu} which make the
 admission decision based on metadata related to a data object, which in case of
 TinuLFU is the access frequency of a data item. Storing metadata related to an
-object often results in increased memory and maintainance overhead. These
+object often results in increased memory and maintenance overhead. These
 admission and eviction policies determine the effectiveness of a cache algorithm
 for a given use-case.
 
@@ -233,7 +233,7 @@ have to be binary as we can also have an LRFU cache\cite{lee2001lrfu} which
 provides us with a way to have an eviction policy which takes both recency and
 frequency into account for eviction. This algorithm subsumes both LRU and LFU
 because its functioning depends on a factor $\lambda$ which dictates the
-weightage that is given to recency versus frequency while evicting an item. As a
+weight that is given to recency versus frequency while evicting an item. As a
 result, we can tune this parameter to have the cache behave like LRU or LFU.
 Thus, with LRFU cache, we can fine-tune our eviction policy in case we do not
 have any other additional information about the items.
@@ -246,7 +246,7 @@ graphs, we do have some information about the graph topology when we access a
 node's neighbours. This information can be useful if there is a high likelihood
 that the neighbours of this node will be accessed. This idea of graph aware
 caching algorithms was introduced by Aksu et al. in a paper where they
-introduced a graph aware cacing policy named Clock-based graph aware
+introduced a graph aware caching policy named Clock-based graph aware
 caching (CBGA)\cite{aksu2015graph}. Although the algorithm contain many 
 important contributions, the
 main idea of this algorithm is to expect that a node's neighbours will be
@@ -254,7 +254,7 @@ accessed if a node is accessed. This idea helped their algorithm outperform all
 other competing cache algorithms which did not exploit the structure of the
 graph. Their idea was further extended by Bok et al.\cite{bok2020memory} where
 they added a used-cache in addition to a prefetcher cache for speeding up
-subgraph lookups. This idea helped them outperform CBGA for the task of subgraph
+sub-graph lookups. This idea helped them outperform CBGA for the task of sub-graph
 matching where they were able to achieve a hit ratio of between 50\% and 65\%. 
 These contributions highlight the potential for graph aware caching for
 reducing the latency of graph access.

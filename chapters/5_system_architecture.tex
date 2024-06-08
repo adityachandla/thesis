@@ -195,7 +195,7 @@ object is accessed, we only need to change the position of the accessed node
 within the heap. This enables us to perform access and insertion operations in
 $\mathcal{O}(\log(n))$ time. Although simple LRU cache implementations have an
 access and insertion time complexity of $\mathcal{O}(1)$,  this cache provides 
-us with a good tradeoff between time complexity and flexibility for 
+us with a good tirade between time complexity and flexibility for 
 different workloads. We will talk more about the empirical evidence supporting
 our choice in the next chapter.
 
@@ -359,7 +359,7 @@ from one node to the other. Let us take the example of traversing a social
 network graph where we start with a single person and find people connected to
 this person till a certain depth. If the starting person has two friends `A' and
 `B', let us assume that `A' has no friends while `B' is a celebrity and has many
-friends. In this case, if we assign the work of perfroming DFS from `A' to one
+friends. In this case, if we assign the work of performing DFS from `A' to one
 worker and the work of performing DFS from `B' to another worker, we would end
 up with an uneven distribution of work. This is because performing DFS on `A'
 would require no further processing while the DFS on `B' is likely to go on for
@@ -455,7 +455,7 @@ shown in the figure:
     \item \textbf{Iteration 2}: In the second iteration, the green worker
         explores the neighbours of node 2 and the blue worker
         explores the neighbours of node 4. After exploring the
-        neighbouring nodes, both of the workers check if some of the newly
+        neighboring nodes, both of the workers check if some of the newly
         explored nodes can be added to another worker's stack. However, since
         both workers are busy, all the nodes are added to their own stacks.
         Finally, like in previous iteration, the newly visited nodes are added
