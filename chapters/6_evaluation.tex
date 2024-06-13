@@ -1,5 +1,184 @@
+Before presenting the results of our comparison with the baseline, we will
+describe our benchmarking procedure. Within the benchmarking methodology, we
+highlight the queries we run along with the dataset on which we run the
+queries. Finally, we describe how the services are deployed and how the results
+are collected.
+
+\smallskip
+Our benchmark contains a total of seven different types of queries. Each of
+these seven queries starts with a random source vertex and performs the desired
+traversal according to the traversal specification. A traversal specification
+specifies the label and direction that needs to be followed for every hop. For
+example, a traversal specification might instruct the algorithm to start from a
+node of type `Person', traverse the outgoing edges with the label
+`PersonKnows', and then find all the incoming edges for `PostCreator'. As a
+result of running this traversal, we would get the identifiers for all the posts
+created by a person's friends. The schema containing the specification of the
+nodes and labels mentioned here can be found in Appendix \ref{sec:schema}. This
+schema describes a social network consisting of people who can create posts
+within forums, comment on posts, etc. 
+
+\smallskip
+The seven traversals that we have chosen can be divided into four parts. The
+first two traversals are 1-Hop traversals, which means they only access a node's
+immediate neighbours. Similarly, we have two queries for 2-Hop traversals, and
+3-Hop traversals. One of the two queries in each category is chosen in such a
+manner that the result cardinality is close to one, and the other query has a
+higher cardinality. However, for 4-Hop traversals, the baseline implementation
+was so slow that we do not have a high cardinality traversal for 4-Hops. The
+following list contains the details of the queries that were used for the
+evaluation. Each of these queries was repeated 20 times with different source
+nodes chosen at random.
+\begin{enumerate}
+    \item \textbf{1 Hop}
+        \begin{enumerate}
+            \item \textbf{Q-1}: Start with a node of type `Forum', and traverse outgoing
+                edges with the label `ForumMember'. This gives us all the forum members for
+                a particular forum.
+            \item \textbf{Q-2}: Start with a node of type `Post', and traverse outgoing
+                edges with the label `PostContainerForum'. This gives us the container forum
+                for a post.
+        \end{enumerate}
+    \item \textbf{2 Hop}
+        \begin{enumerate}
+            \item \textbf{Q-3}: Start with a node of type `Person', and traverse
+                the edges with the label `PersonKnows' twice. This gives us all the
+                people that a person's friends know.
+            \item \textbf{Q-4}: Start with a node of type `Person', and traverse
+                the edge with the label `PersonWorksAt'. After this traverse the
+                relation `OrgLocation'. This gives us the locations of the
+                companies that a person has worked for.
+        \end{enumerate}
+    \item \textbf{3 Hop}
+        \begin{enumerate}
+            \item \textbf{Q-5}: Start with a node of type `Person', and traverse
+                the edges with the label `PersonKnows'. After this, traverse the
+                edge with the label `PersonInterestTag' to get the interests of all
+                these people. Finally, traverse edges with the label `TagClass' to
+                find the tags for each of these interests. This query gives us
+                the tags for the interests of a person's friends.
+            \item \textbf{Q-6}: Start with a node of type `Post', and traverse
+                the edge with the label `PostContainerForum' to get the forum which
+                the post is a part of. Then we traverse the `ForumTag' label
+                followed by the `TagClass' label. This gives us the tag classes for
+                a post's forum.
+        \end{enumerate}
+    \item \textbf{4 Hop}
+        \begin{enumerate}
+            \item \textbf{Q-7}: This query starts with a `Comment', and looks for
+                this comment's creator by following the `CommentCreator' label.
+                Then, we look at the tag superclasses of this person's interest
+                tag by following `PersonInterestTag', `TagClass', and
+                `TagClassSuperclass' labels.
+        \end{enumerate}
+\end{enumerate}
+
+\medskip
+As mentioned in the previous paragraph, we run these queries on the LDBC-SNB dataset
+whose schema is provided in Appendix \ref{sec:schema}. However, LDBC provides
+multiple datasets with the given schema, all of which are of varying sizes.
+For this thesis, we use datasets with a scaling factor of 1 and 10 (SF-1 and
+SF-10). As mentioned in Section \ref{sec:componentOverview}, we convert these
+datasets to a binary format before processing. During this processing, we remove
+edge and node-related information since that is not needed during the traversal.
+After removing the unnecessary information, we partition the adjacency into
+multiple files, each of which is then uploaded to S3.
+Table \ref{table:dataSpecs} contains the specifications of the two datasets that
+we use.
+
+
+\begin{table}[h!]
+ \centering
+ \begin{tabular}{|c | c | c |} 
+ \hline
+  & SF-1 & SF-10 \\ [0.5ex] 
+ \hline\hline
+     \textbf{Nodes} & 3 Million & 30 Million \\ 
+     \textbf{Bidirectional edges} & 17 Million & 170 Million \\
+     \textbf{Number of partitions} & 37 & 173 \\
+     \textbf{Total size} & 286 MB & 2.8 GB \\
+ \hline
+ \end{tabular}
+ \caption{Dataset specifications}
+ \label{table:dataSpecs}
+\end{table}
+
+\medskip
+In order to run these queries, we run the graph access service and graph
+algorithm service on an EC2 instances\cite{awsEC2}. AWS provides a variety of
+compute instances for different workloads. In our case, we need a general
+purpose compute instance which has high bandwidth. At the time of writing this
+thesis, instances labeled `c7gn' fit these specifications the best. The
+particular instance that we use for most of our benchmarks is labeled
+`c7gn.xlarge' which provies a network bandwidth of 50 Gbps, has 8 Gigabytes of
+RAM, has 4 vCPUs, and costs 0.25 \$/hour.
+
 \section{Comparison with baseline}\label{sec:cmpBaseline}
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/charts/BFS_cmp_1}
+        \caption{BFS SF-1}
+        \label{fig:bfsSf1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{figures/charts/BFS_cmp_10}
+        \caption{BFS SF-10}
+        \label{fig:bfsSf10}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/charts/DFS_cmp_1}
+        \caption{DFS SF-1}
+        \label{fig:dfsSf1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{figures/charts/DFS_cmp_10}
+        \caption{DFS SF-10}
+        \label{fig:dfsSf10}
+    \end{subfigure}
+    \caption{Baseline comparison}
+    \label{fig:baselineCmp}
+\end{figure}
+Figure-\ref{fig:baselineCmp} contains the comparison of our final
+implemnetation, as described in Section \ref{sec:graphAccess} and Section 
+\ref{sec:parallelAlgorithms}, with the baseline implementation described in
+Section \ref{sec:baseline}. Figures \ref{fig:bfsSf1} and \ref{fig:bfsSf10}
+compare the performance of Breadth first search for scaling factor of 1 and 10.
+Similarly, Figures \ref{fig:dfsSf1} and \ref{fig:dfsSf10} do the same for Depth
+first search. Note that the y-axis on these graphs is logarithmic. Looking at
+these graphs, we notice the following facts:
+\begin{enumerate}
+    \item \textbf{No benefit for small graphs}: From figures \ref{fig:dfsSf1}
+        and \ref{fig:bfsSf1}, it is clear that our proposed architecture perform
+        worse than the simpler baseline implementation. This is primarily
+        because the number of different files is quite small for SF-1 and
+        therefore most of the files required for a traversal are loaded in the first
+        few runs of that traversal. After that, all the traversals are performed
+        from memory.
+    \item \textbf{The proposed approach scales better}: If we compare the results of
+        running DFS and BFS on SF-1 and SF-10, we notice that the running times
+        for our final implementation remain relatively unchanged. However, the
+        running times for the baseline implementation degrade by one to two
+        orders of magnitude. Furthermore, the total time for running the entire
+        workload for the baseline implementation on SF-10 with BFS was around 14
+        minutes whereas the running time for our proposed implementation was
+        just 24 seconds. This is a 35x improvement in the running time of the
+        entire workload.
+    \item \textbf{BFS $>$ DFS}: These results also show that the simpler parallel
+        BFS implementation works much better than the parallel DFS
+        implementation. For SF-10, the entire workload took 68 seconds while
+        running DFS but took only 14 seconds while running BFS.
+\end{enumerate}
+
+\medskip
+TODO argue that the prefetcher yields some benefit 
+
 \subsection{Optimizing partition sizes}\label{sec:partitionSize}
+\subsection{Distributed Deployment}\label{sec:distDeploy}
 \section{Comparison with other tools}\label{sec:cmpOtherTools}
 \subsection{Neo4j}
 \subsubsection{Monolithic Deployment}
