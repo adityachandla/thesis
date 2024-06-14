@@ -171,11 +171,96 @@ these graphs, we notice the following facts:
     \item \textbf{BFS $>$ DFS}: These results also show that the simpler parallel
         BFS implementation works much better than the parallel DFS
         implementation. For SF-10, the entire workload took 68 seconds while
-        running DFS but took only 14 seconds while running BFS.
+        running DFS but took only 14 seconds while running BFS. We believe this
+        is primarily due to the fact that the DFS implementation is more
+        complicated, and uses more memory than the implementation for BFS.
 \end{enumerate}
 
 \medskip
-TODO argue that the prefetcher yields some benefit 
+Figure-\ref{fig:reqDist} shows the percentage of requests served by
+the LRFU cache, the prefetcher, and AWS S3. We can see that the distribution is
+very similar for both BFS and DFS. We also notice that the LRFU cache is very
+effective and mitigates almost half of all the network calls to AWS S3. However,
+we also notice that the prefetcher only serves around 3\% of all the
+requests. We will now investigate why the prefetcher is less effective than 
+we had hoped.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/charts/pie_bfs}
+        \caption{BFS}
+        \label{fig:bfsPie}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{figures/charts/pie_dfs}
+        \caption{DFS}
+        \label{fig:dfsPie}
+    \end{subfigure}
+    \caption{Request Distribution}
+    \label{fig:reqDist}
+\end{figure}
+
+\subsubsection{Is the prefetcher useless?}\label{sec:prefetcherUseless}
+To answer the question regarding the effectiveness of the prefetcher,
+we need to remind ourselves that the traversal algorithms being run on the graph
+algorithm service are parallel. This means that multiple units of concurrency
+are trying to advance the traversal at the same time. This interferes with the
+functioning of the prefetcher, which itself is trying to advance the traversal by
+utilizing concurrency. This means these two mechanisms are competing against
+each other. Since our implementation has more concurrency units in the 
+parallel traversal algorithm than the prefetcher, the prefetcher is not very
+beneficial.
+
+\medskip
+This reasoning can be verified by running sequential versions of
+BFS and DFS. Figure \ref{fig:reqDistSeq} shows the request distribution when we
+run sequential traversals instead of their parallel counterparts. We can see
+that the prefetcher's share is substantially more. Interestingly, it turns out
+that the prefetcher is more effective for DFS than for BFS. Since the sequential
+implementations for BFS and DFS are equally efficient, we found that the
+workload running time for DFS was 13 \% lower than the workload running time 
+for BFS. However, the total running time for the sequential versions was still
+significantly slower than their parallel counterparts. Parallel BFS was 82 \%
+faster than sequential BFS, and Parallel DFS was 44 \% faster than sequential
+DFS.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/charts/pie_bfs_seq}
+        \caption{BFS}
+        \label{fig:bfsPieSeq}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{figures/charts/pie_dfs_seq}
+        \caption{DFS}
+        \label{fig:dfsPieSeq}
+    \end{subfigure}
+    \caption{Request Distribution Sequential}
+    \label{fig:reqDistSeq}
+\end{figure}
+
+\medskip
+Given these results, we need to address whether it makes sense to have parallel
+algorithms along with the prefetcher. If we want performance without regard for
+hardware cost, it does indeed make sense to have both. However, in most cases,
+there is a tradeoff to be made here. If we want faster traversals at the expense
+of lower throughput, it makes sense to use only parallel algorithms. This is
+because the traversal algorithm has more precise information, compared to the 
+prefetcher, about the edges that need to be traversed. However, if we want
+higher throughput by performing multiple traversals in different
+concurrency units, it makes sense to use a prefetcher. This is because not
+having the prefetcher
+would free up more concurrency units for the graph algorithm service, thereby
+increasing the throughput. For the rest of this thesis, however, we will still
+use both the prefetcher and the parallel algorithms as they yield the best
+performance when used together.
+
+\subsubsection{Exploiting parallelism}
+\subsubsection{Exploring AWS S3 One-Zone}
 
 \subsection{Optimizing partition sizes}\label{sec:partitionSize}
 \subsection{Distributed Deployment}\label{sec:distDeploy}
