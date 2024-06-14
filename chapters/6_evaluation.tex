@@ -260,7 +260,106 @@ use both the prefetcher and the parallel algorithms as they yield the best
 performance when used together.
 
 \subsubsection{Exploiting parallelism}
+As we explained in Section \ref{sec:graphAccess}, one of our motivations for
+introducing the modified CSR format was to enable more granular access to the
+graph. With this granular access, we can make more requests for a given
+bandwidth, this enables us to increase the number of traversals being
+executed in parallel. In this section, we present the impact of running multiple
+traversals in parallel.
+
+\medskip
+Figure-\ref{fig:parallelismImpact} shows the total workload running time for
+different levels of parallelism. As the figure shows, we see significant
+improvements in the running time. However, these improvements taper off at
+higher levels of parallelism. By going from parallelism of 1 to 4, we see an
+almost 4x improvement, however, going from parallelism of 10 to 20, we hardly
+see any improvements. This suggests that although increasing the parallelism
+helps, eventually the hardware becomes the limiting factor for the overall
+running time. 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/charts/parallelism}
+    \caption{Parallelism impact}
+    \label{fig:parallelismImpact}
+\end{figure}
+
+\medskip
+At this stage, our implementation can process a workload consisting of
+$7*20 = 140$ queries in 3 seconds whereas the baseline implementation processed
+the same queries in 14 minutes. Even if we increase the parallelism for baseline
+implementation to 2, the running time is still more than 7 minutes. Increasing
+parallelism beyond this point is not feasible in the baseline implementation
+because of its underlying architecture.
+
 \subsubsection{Exploring AWS S3 One-Zone}
+AWS S3 offers different storage classes for objects, and each storage class has
+different performance characteristics. S3 One-Zone is one such storage class
+that was introduced by AWS in the past few months, and according to AWS, it has
+up to ten times lower latency than general-purpose storage. As our main goal
+for this thesis was to find a way to reduce object access latency, we also
+performed some of our experiments with S3 One-Zone.
+Note that all the experiments
+in the previous sections used S3's general-purpose storage, which
+is S3's default storage type.
+
+\medskip
+Before we present our experimental evaluation, it is worth discussing how this
+new storage type achieves ten times lower latency and the tradeoffs
+associated with its use. AWS S3 is a region-specific service,
+which means that all its servers along with the underlying data are present
+in a single AWS region. For redundancy, each AWS region consists of multiple
+availability zones, and each availability zone consists of multiple data
+centers. Files stored as general-purpose storage are replicated across 
+multiple availability zones, whereas files stored as One-Zone storage type are
+replicated only within a single availability zone. This architectural
+distinction gives rise to the following changes:  
+\begin{enumerate}
+    \item \textbf{Lower latency}: Since the physical distance between the
+        servers is reduced, the network latency is also lower. However, this
+        also implies that the AWS EC2 instances processing the data must be
+        in the same availability zone.
+    \item \textbf{Lower resilience to outages}: Since the general purpose
+        storage is replicated across multiple availability zones, an outage in
+        one of the availability zones is unlikely to have an operational impact
+        on the service. On the other hand, if an object is stored in a single-zone, 
+        then it is not resilient to single-zone outages. However, it must
+        be noted that the last time AWS S3 had an outage was in 2017.
+    \item \textbf{Higher storage cost and lower request cost}: At the time of
+        writing this thesis, the cost of
+        storage for S3 One-Zone is 0.16 \$/GB/month, whereas the cost for S3
+        General is just 0.023 \$/GB/month. However, the cost of a GET request for
+        S3 One-Zone is lower than that for S3 General. A thousand requests to
+        S3-One-Zone cost 0.0002 \$, whereas a thousand requests to S3-General
+        cost 0.0004 \$. 
+\end{enumerate}
+
+\medskip
+With these tradeoffs in mind, we present the performance of S3-One-Zone for our
+workload. Figure-\ref{fig:ozCmp} shows the average running times of traversals
+on the SF-10 dataset with inter-traversal parallelism of 1. We observe that the
+running time is reduced by almost an order of magnitude. The total workload
+running time was 83 \% lower for BFS and 82 \% lower for DFS. Therefore, we see
+consistent improvements across the workload. However, these improvements become less
+substantial as we increase the level of inter-traversal parallelism because the
+bottleneck shifts to the data processing capabilities of the underlying
+instance.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/charts/BFS_cmp_oz}
+        \caption{BFS}
+        \label{fig:bfsCmpOz}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \includegraphics[width=\textwidth]{figures/charts/DFS_cmp_oz}
+        \caption{DFS}
+        \label{fig:dfsCmpOz}
+    \end{subfigure}
+    \caption{Comparing S3 General with S3 One-Zone}
+    \label{fig:ozCmp}
+\end{figure}
 
 \subsection{Optimizing partition sizes}\label{sec:partitionSize}
 \subsection{Distributed Deployment}\label{sec:distDeploy}
