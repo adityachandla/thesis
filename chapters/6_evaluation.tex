@@ -173,7 +173,7 @@ these graphs, we notice the following facts:
         implementation. For SF-10, the entire workload took 68 seconds while
         running DFS but took only 14 seconds while running BFS. We believe this
         is primarily due to the fact that the DFS implementation is more
-        complicated, and uses more memory than the implementation for BFS.
+        complicated, and uses more memory than the implementation for BFS. 
 \end{enumerate}
 
 \medskip
@@ -257,7 +257,7 @@ having the prefetcher
 would free up more concurrency units for the graph algorithm service, thereby
 increasing the throughput. For the rest of this thesis, however, we will still
 use both the prefetcher and the parallel algorithms as they yield the best
-performance when used together.
+performance, albeit marginally, when used together.
 
 \subsubsection{Exploiting parallelism}
 As we explained in Section \ref{sec:graphAccess}, one of our motivations for
@@ -362,7 +362,57 @@ instance.
 \end{figure}
 
 \subsection{Optimizing partition sizes}\label{sec:partitionSize}
+In distributed cloud storage systems like AWS S3, a file/object is the entity 
+that gets distributed across the cluster. This distribution enables them to
+promise (in their `Service Level Agreement' (SLA)) that every object
+can sustain a read throughput of 5,500 requests per second. At this throughput,
+the SF-10 dataset, which has 173 files (Table \ref{table:dataSpecs}), can
+sustain a read-throughput of 951,500 requests per second. This read-throughput
+of almost a million requests per second is not achieved in our
+benchmarks. However, their SLA does not mention the impact of having more or
+fewer files on the request latency. In this section, we will investigate whether
+partition size impacts the request latency.
+
+\smallskip
+Figure-\ref{fig:partitionSizeImp} shows the running times for the parallel BFS
+algorithm at various levels of parallelism and various partition sizes. We do
+not see any significant difference between the running times with parallelisms of
+1 and 20, but we do see a difference for parallelisms of 4, 6, and, 10.
+We believe that we do not see a difference for parallelism of 1 because the
+request load is low, however, we do not see any difference for parallelism of 20
+because the data processing capabilities of our instance become the bottleneck.
+For parallelism of 4,6, and 10, we see that there is a difference of around 2.5
+seconds between partition size of 2 MB and that of 128 MB. This suggests that
+smaller partition sizes may yield better latency. We note that even for the
+largest partition size of 128 MB, the promised throughput(SLA) that AWS S3 can
+provide is
+121,000 requests per second which is still an order of magnitude more than the
+throughput that we utilize. Therefore, the latency improvements are not because
+of any throttling. However, it may be the case that with more files we use
+a larger percentage of AWS S3's cluster which resulted in lower
+latency.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/charts/part_cmp_general_bfsp}
+    \caption{Partition Size Impact}
+    \label{fig:partitionSizeImp}
+\end{figure}
+
+\medskip
+Since AWS S3's documentation does not mention any SLAs regarding latency,
+the results presented in this section might change over time. However, at the time of
+writing this thesis, we see a noticeable difference in performance by simply
+changing the partition size of the files. Since AWS S3's pricing model charges
+us for storage and not the number of files, for a given workload it is
+worth exploring the implications of partition size on the performance.
+
 \subsection{Distributed Deployment}\label{sec:distDeploy}
+In the last few sections, we have noticed that with inter-traversal parallelism
+of 20, our instance's processing capabilities became a bottleneck. In this
+section, we use multiple instances to process our queries. Using this
+experiment, we argue that by utilizing more instances we can achieve higher
+levels
+
 \section{Comparison with other tools}\label{sec:cmpOtherTools}
 \subsection{Neo4j}
 \subsubsection{Monolithic Deployment}
