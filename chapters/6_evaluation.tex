@@ -407,30 +407,29 @@ us for storage and not the number of files, for a given workload it is
 worth exploring the implications of partition size on the performance.
 
 \subsection{Distributed Deployment}\label{sec:distDeploy}
-%% This section needs grammar check.
 In the last few sections, we have noticed that with inter-traversal parallelism
 of 20, our instance's processing capabilities became a bottleneck. In this
 section, we use multiple instances for processing. Using this experiment, we
 argue that the proposed architecture is scalable to multiple instances and that
-we indeed get desired speedup by adding more instances. In order to do this, we
-deployed graph algorithm service on a single instance and deployed graph access
+we get the desired speedup by adding more instances. To do this, we
+deployed the graph algorithm service on a single instance and deployed the graph access
 service on two separate instances. During this benchmark, we compare the
 difference in performance when the graph algorithm service utilizes only one
 instance of graph access service versus when it utilizes both.
 
 \smallskip
 Figure \ref{fig:distributed} shows the results of our benchmark. Note that
-unlike the previous sections where we ran 20 traversals for each of the 7
+unlike the previous sections, where we ran 20 traversals for each of the 7
 traversal specification, here we ran 100 traversals for each specification.
 As we can see, the running time with two instances was a third of the running
 time with a single instance. However, we do see that increasing levels of
-parallelism after 10, does not have a substantial impact. This indicates that
-the graph access service is overloaded because if the graph algorithm service
-was overloaded then we would not have seen any improvement by having two
-instances of graph access service. Interestingly, we see that doubling the number
-of instances reduces the running time by a factor of three. This is surprising
+parallelism after 10 does not have a substantial impact. This indicates that
+the graph access service is overloaded, as the performance improves when two
+instances of graph algorithms service are deployed, suggesting that graph
+algorithm service is not the source of a bottleneck. Interestingly, we see that doubling the
+amount of compute reduces the running time by a factor of three. This result is surprising
 because we usually see a speedup of less than twice when we double the amount of
-resources but here we see a 3x performance improvement.
+resources, but here we see a 3x performance improvement.
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{figures/charts/distributed}
@@ -441,11 +440,11 @@ resources but here we see a 3x performance improvement.
 
 \medskip
 Our intuition for this bottleneck is further supported by the fact that running
-the same worload on a larger instance yields better performance.
+the same workload on a larger instance yields better performance.
 Figure \ref{fig:distributedLarge} shows the results of running the benchmark
-with an instance of type c7gn.2xlarge instead of c7gn.large. As the name
+with an instance of type c7gn.2xlarge instead of c7gn.xlarge. As the name
 suggests, this instance has twice the capabilities of the earlier instance.
-As a result, we see that the total running time was halved for a parallelism
+As a result, the total running time was halved for parallelism
 of 40 compared to Figure \ref{fig:distributed}. Furthermore, we continue to see
 the phenomenon of getting almost 3x performance improvement with twice the
 resources.
@@ -457,9 +456,9 @@ resources.
 \end{figure}
 
 \smallskip
-In this section, we verified the feasiblity of our architecture for a
+In this section, we verified the feasibility of our architecture for a
 distributed setting and showed that we can achieve substantial performance
-improvements by adding more hardware to achieve better throughput.
+improvements by adding more hardware.
 
 \section{Comparison with other tools}\label{sec:cmpOtherTools}
 \subsection{Neo4j}
