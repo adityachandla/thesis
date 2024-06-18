@@ -461,8 +461,63 @@ distributed setting and showed that we can achieve substantial performance
 improvements by adding more hardware.
 
 \section{Comparison with other tools}\label{sec:cmpOtherTools}
-\subsection{Neo4j}
-\subsubsection{Monolithic Deployment}
-\subsubsection{Distributed Deployment}
-\subsection{Apache Flink}
+In this section, we will compare the performance of our service with tools that
+also enable users to perform traversals on graphs. Both tools that we compare
+our solution with here do not provide a separation between storage and
+compute, thus they are not direct competitors. However, these tools are widely
+used for graph processing and therefore, a comparison with these tools enables
+us to gauge our tool's standing among contemporary graph processing tools.
+
+\smallskip
+Figure \ref{fig:competitorsOverview} contains four broad categories of
+frameworks that can be used for performing traversals on large graphs. At the
+top, we have the big data processing frameworks. These frameworks can distribute
+data across a large cluster of compute instances and perform a variety of
+computations on the data. These frameworks can process anything from images in a
+datalake to real-time information on a message bus. However, due to their
+generality, these frameworks also have higher latency than databases. Relational
+databases, depicted below big data frameworks, are useful for a
+smaller set of use cases but provide lower latency. There is a wide variety of
+relational databases, some are more suited for transactional workloads while
+others are better suited for analytic workloads. Next on our list are graph
+databases which are not as flexible as relational databases but provide lower
+latency for graph-specific applications like
+traversals\cite{kotiranta2022performance}. Finally, we have custom-built
+technologies that are built to provide the best possible latency for the traversal
+of a specific type of graph data. For example, Alibaba created a custom
+distributed system for performing 4-hop traversals over a graph containing 100
+billion edges within 4 milliseconds\cite{sahu2017ubiquity}.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/competitors}
+    \caption{Overview of competitors}
+    \label{fig:competitorsOverview}
+\end{figure}
+
+\smallskip
+Within the landscape we have described above, we will compare our tool with
+Neo4j, which is a graph database, and Apache Flink, which is a big data
+processing framework. Although it is also possible to compare our tool with
+relational databases, their wide variety makes it difficult to make a definitive
+statement about all relational databases based on a comparison with one of them.
+Furthermore, if a relational database does not separate its storage and compute,
+then the findings of Section \ref{sec:neo4jCmp} would apply to that database.
+However, if it does separate its storage and compute, then it may provide the
+same benefits but it will still have worse performance because of less efficient
+joins\cite{kotiranta2022performance}.
+
+\subsection{Neo4j}\label{sec:neo4jCmp}
+Neo4j\cite{neo4j} was one of the first native graph database and is widely
+considered to be the most popular and widely used graph database. The community
+version of Neo4j is free to use and its source code is hosted on github.
+However, there are a few features that we use for this evaluation that are only
+available in the paid enterprise edition.
+
+\subsubsection{Standard Deployment}
+In this section we evaluate the performance of a standard Neo4j deployment.
+In this deployment, a single node contains all the relevant information to
+answer any query related to the graph.
+\subsubsection{Fabric Deployment}
+
+\subsection{Apache Flink}\label{sec:flinkCmp}
 
