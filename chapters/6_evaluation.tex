@@ -507,22 +507,21 @@ same benefits but it will still have worse performance because of less efficient
 joins\cite{kotiranta2022performance}.
 
 \subsection{Neo4j}\label{sec:neo4jCmp}
-Neo4j\cite{neo4j} was one of the first native graph database and is widely
-considered to be the most popular and widely used graph database. The community
-version of Neo4j is free to use and its source code is hosted on github.
-However, there are a few features that we use for this evaluation that are only
+Neo4j\cite{neo4j} was one of the first native graph databases and is widely
+considered the most popular and widely used graph database. The community
+version of Neo4j is free to use, and its source code is hosted on Github.
+However, some few features that we use for this evaluation are only
 available in the paid enterprise edition.
 
 \subsubsection{Standard Deployment}
-% Grammar check from here.
-In this section we evaluate the performance of a standard Neo4j deployment.
+In this section, we evaluate the performance of a standard Neo4j deployment.
 In this deployment, a single node contains all the relevant information to
 answer any query related to the graph. There are various methods of performing
 traversal in Neo4j. If we want the highest degree of control over graph
-accesses, we can use the `Low-level API'. Then, we have the `Traversals API' which
+accesses, we can use the `Low-level API'. Then, we have the `Traversals API', which
 enables us to provide specifications for a traversal instead of implementing the
 core traversal algorithm. Lastly, we can also get the desired results by writing
-a cypher query to get the desired results. All three APIs provide the same final
+a Cypher query to get the desired results. All three APIs provide the same final
 result but use different underlying mechanisms to get those results.
 
 \smallskip
@@ -542,41 +541,40 @@ databases which enable us to partition the database across various Neo4j nodes.
 \end{figure}
 
 \smallskip
-Before talking about composite databases, we note that Neo4j also provides a
-graph data science library(GDS) which can also be used to perform traversals.
-This library has in-built implementations for common traversal algorithms and a
-Pregel API. However, in order to use this library, we need to create an
-in-memory projection of the sub-graph that we want to query. Furthermore, this
-projection can not be mutated like a normal graph in Neo4j. During our
+Before discussing composite databases, we note that Neo4j also provides a
+graph data science library(GDS), which provides capabilities to perform traversals.
+This library has in-built implementations for frequently used traversal algorithms and a
+Pregel API. However, to use this library, we have to create an
+in-memory projection of the sub-graph we want to query. Furthermore, this
+projection can not be mutated like an ordinary graph in Neo4j. During our
 experiments, we found this library to be less performant than the native Neo4j
 APIs for our use-case.
 
 \subsubsection{Composite Databases}
-Composite databases in Neo4j consist of multiple standard databases which can be
-queried, with special syntax, while using a single database. The main idea
-behind using composite databases is that one could partition the graph into
-subgraphs such that most of the queries can be served using a single subgraph or
-by using a scatter-gather approach. If the graph can indeed be partitioned in
-such a way that most of the queries either use a single subgraph or can be
-formulated as scatter-gather queries, then the overall performance should be
+Composite databases in Neo4j consist of multiple standard databases that can be
+queried from within a single logical database. The main idea
+behind databases is that one could partition a large graph into
+subgraphs such that most of the queries can either be served using a single subgraph or
+a scatter-gather approach. If this is achievable, the query 
+performance would remain 
 comparable to what we saw in the previous section. This approach may work well
 for some graphs, however, we explore the performance characteristics of this
-approach when we are not able to form such isolated partitions of our graph.
+approach when we cannot form such isolated partitions of our graph.
 
 \smallskip
-When the partitioning of a graph, as described in the previous paragraph is not
-possible, then, in the worst case, every step of the traversal might need to be
+When the partitioning of a graph, as described in the previous paragraph is
+infeasible, then every step of the traversal might need to be
 performed on a different shard. For example, if we want to find the work
 locations of a person's friends, and the Person entity is present in a separate
 database from the Organization entity, then we would have to wait for results
 from one database before we can issue a query to the other database. In this
-case, we notice that the query performance degrades severly.
+case, we notice that the query performance degrades severely.
 
 \smallskip
 Figure \ref{fig:neoFabricCmp} shows the performance of composite databases where
-every alternate hop is performed on a separate database similar to the example
+every alternate hop is performed on a separate database, similar to the example
 we provided in the previous paragraph. In this figure, we see that the query
-performance becomes similar to AWS S3 general and is worse than AWS S3 One-Zone.
+performance becomes equivalent to AWS S3 general and is worse than AWS S3 One-Zone.
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{figures/charts/fabric_bfs_cmp}
@@ -585,42 +583,42 @@ performance becomes similar to AWS S3 general and is worse than AWS S3 One-Zone.
 \end{figure}
 
 \smallskip
-As mentioned before, it may be possible to avoid this type of suboptimal
-partitioning for some databases. However, for the general case where we do not
-know the eventual size of various entities of a graph and the queries that 
-may be performed in the future, it may not be avoidable. Furthermore, this
+For some databases, this type of suboptimal
+partitioning may be avoidable. However, for the general case where we do not
+know the eventual size of various entities of the graph and the queries that 
+users may perform in the future, this situation may not be avoidable. Furthermore, this
 approach has the following additional drawbacks:
 \begin{enumerate}
-    \item \textbf{Distribution transparency}: is one of the primary desireable
-        characteristic of any distributed system. This states that the user of a
-        system should not be aware of how the data and processing is distributed
+    \item \textbf{Distribution transparency}: is one of the primary desirable
+        characteristics of any distributed system. This states that the user of a
+        system should not be aware of how the data and processes are distributed
         within a distributed system. Neo4j's composite databases violate this
-        principle because the onus of partitioning the data falls on the user of
-        the system.
+        principle because the onus of partitioning the data falls on the user.
     \item \textbf{Special Query language}: To the best of our knowledge, we can
         not use the traversal or low-level API with composite databases.
         Furthermore, we need to specify the database that needs to be used for
-        each subquery which requires a rewrite of the standard Cypher queries.
-        This may become a bigger problem for users who use object relational
-        mappers (ORMs), since most ORMs generate standard cypher queries which
+        each subquery, which requires a rewrite of the standard Cypher queries.
+        This may become a bigger problem for users who use object-relational
+        mappers (ORMs), since most ORMs generate standard Cypher queries that
         do not work with composite databases.
     \item \textbf{Shadow nodes}: If two entities, which are in different
         databases, have a connection, then that connection requires a shadow
-        node. A shadow node is basically a placeholder for a node that is not
+        node. A shadow node is a placeholder for a node that is not
         present in the current database but in a remote database. These shadow
-        nodes require additional maintainance overhead.
+        nodes require additional maintenance overhead.
 \end{enumerate}
 
 \bigskip
 In conclusion, although Neo4j provides great performance for databases that can
 be stored on a single machine, this performance may degrade for larger
 databases. This is true for graphs that can not be partitioned into independent
-graphs such that, either the queries can be answered using a scatter-gather
-approach, or the queries can be answered from a single partition. If this
-property does not hold, then the query performance can degrade by an order of
+graphs, such that the queries can be answered using a scatter-gather
+approach or the queries can be answered using a single partition. If this
+property does not hold, the query performance can degrade by an order of
 magnitude or more. There are other graph databases, like
 tigergraph\cite{tigergraph}, which claim to have
-distribution transparency for large graphs. However, these claims are difficult
+distribution transparency for large graphs. However, these claims are
+challenging
 to validate independently since, unlike Neo4j, they do not have the option for
 self-hosting.
 
