@@ -101,9 +101,101 @@ link between two concepts. Let us assume we have a knowledge graph that is used
 by a pharmaceutical company to model relationships between studies, populations,
 diseases, etc. We assume that the size of this graph is approximately 5 TB and
 that the usage of this database by scientists can be satisfied by 1 thousand
-graph accesses per second. 
+graph accesses per second. Table \ref{table:costKnowledgeGraphs} shows the total
+cost for both storage mediums for this case. The cheapest general purpose
+instance which has an instance store of 5 TB is `m6id.24xlarge' which costs 5.7
+dollars per hour. We notice that, with AWS S3, we were able to use a much
+cheaper instance because we do not require a very high throughput. Whereas, if
+we use SSD, we are forced to use an instance which has 96 vCPUs although we may
+not need that much compute.
+
+\begin{table}[h!]
+ \centering
+ \begin{tabular}{|c | c | c |} 
+ \hline
+  & AWS S3 & SSD \\ [0.5ex] 
+ \hline\hline
+     \textbf{Compute} & 0.25 & 5.7 \\ 
+     \textbf{Storage} & 0.17 & Na \\
+     \textbf{Access} &  1.44 & Na \\
+     \hline
+     \textbf{Total} & 1.86 & 5.7 \\
+ \hline
+ \end{tabular}
+ \caption{Cost for first use case (\$ per hour)}
+ \label{table:costKnowledgeGraphs}
+\end{table}
+
+\medskip
+\textbf{Fraud detection} is a common use case for graph databases as it enables
+security services to check whether a transaction is related to a bad actor or
+not. These systems can have a large database of information as they contain
+links between people, devices, and accounts. These systems can also have a very
+high workload if they verify every transaction that takes place. Therefore, if
+we assume, similar to the previous use case, that we have a graph that is
+5 TB in size and requires 100 thousand graph accesses per second to check for
+frauds. Table \ref{table:costFraudDetection} shows the total cost for both
+storage mediums for this case. We observe that using AWS S3 in this case is
+almost 10 times more expensive than using two instances with a total storage of
+5 TB. The problem with using AWS S3 in this case is that the cost of making
+requests is so high that it offsets any benefit that we get by using
+cheaper instances.
+
+\begin{table}[h!]
+ \centering
+ \begin{tabular}{|c | c | c |} 
+ \hline
+  & AWS S3 & SSD \\ [0.5ex] 
+ \hline\hline
+     \textbf{Compute} & 5 & 11.4 \\ 
+     \textbf{Storage} & 0.17 & Na \\
+     \textbf{Access} &  144 & Na \\
+     \hline
+     \textbf{Total} & 149.17 & 11.4 \\
+ \hline
+ \end{tabular}
+ \caption{Cost for second use case (\$ per hour)}
+ \label{table:costFraudDetection}
+\end{table}
 
 \subsection{Other cost considerations}
+Apart from the cost of infrastructure, there are other aspects of a system that
+need to be taken into account when using a graph database. Although these
+consideration are hard to capture within a cost model, we will give a subjective
+description of some of these additional costs.
+\begin{enumerate}
+    \item \textbf{Cost of update mechanisms}: Although we have only considered a
+        read-only workload for the cost model, real databases also need to
+        provide support for transactions. The mechanism for supporting ACID
+        transactions will likely differ between the two approaches. Therefore,
+        it may incur different infrastructure and maintainance costs which are
+        important to consider.
+    \item \textbf{Migration cost}: When using an SSD for storing a graph, the
+        graph may grow to an extent that the user may have to upgrade an
+        instance to accomodate the graph. This migration of a production
+        workload is tricky and brings with it various challenges like ensuring
+        data durability, and minimizing the downtime. These efforts require
+        additional labor cost which should be taken into account.
+    \item \textbf{Replication cost}: In order to ensure availability, production
+        workloads are often replicated across various nodes in the coupled
+        storage and compute model. This not only requires extra infrastructure
+        but also requires data replication between instances. These replication
+        mechanisms add additional complexity which is relegated to AWS S3 if we
+        use it as the storage layer.
+\end{enumerate}
+
+\medskip
+In conclusion, this section provides a mathematical model for reasoning about
+the cost of using AWS S3 instead of SSD for graph storage. Then, we use this
+model to provide use cases where one may be preferred over this other. Overall,
+we see that AWS S3 is better for use cases where the amount of data is huge but
+the required throughput is not as large. We also mention some additional costs
+that may be incurred when using SSD as the storage layer. Therefore, using AWS S3 is
+not ideal for all use cases pertaining to querying graphs, but it does have
+significant benefits over other approaches for certain use cases we mentioned in
+this section.
 
 \section{Threats to credibility of this work}\label{sec:threats}
-\section{Alternate system architectures}\label{sec:altArchitectures}
+% Update mechanisms cost.
+% Combined system architectures.
+% Market for the mentioned use cases.
