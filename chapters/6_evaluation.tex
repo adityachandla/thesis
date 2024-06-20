@@ -623,54 +623,50 @@ to validate independently since, unlike Neo4j, they do not have the option for
 self-hosting.
 
 \subsection{Apache Flink}\label{sec:flinkCmp}
-% Grammar check this:
 Apache flink\cite{flink} is a distributed processing engine for processing
 streams of both bounded and unbounded data. We chose this framework for our
-evaluation because at its core, Flink is built for processing data in a
-distributed setting. Its programming model is designed in such a way that the
-pipelines that a user creates can be parallelized ad infinitum. However, since
-Flink is not specifically designed for dealing with graphs, there is a lack of
+evaluation because, at its core, Flink is built for processing data in a
+distributed setting. Its programming model is designed to enable users to create 
+pipelines that can be parallelized ad infinitum. However, since
+Flink is not specifically designed for dealing with graphs; there is a lack of
 data structures for representing graphs. Therefore, we use a graph processing
 library named Gelly\cite{flinkGelly}.
 
-% What is the pregel API 
 \smallskip
-This library provides enables us to specify vertex centric computations which
-are performed on the entire graph. The idea behind the vertex centric
-computation is to `think like a vertex'. This means that we specify a
-computation that a vertex needs to perform based on its neighbours and at the
-end of its computation, it has the capability to send some information to its
-neighbours. Vertex centric computations run for multiple iterations and in each
-iteration, every vertex runs some function based on the input from its
-neighbours and optionally gives an output to its neighbours. These vertex
+This library enables us to run vertex-centric computations on graphs. 
+The idea behind the vertex-centric
+computation is to `think like a vertex'. This means that we specify the 
+calculations that a vertex needs to perform based on its neighbors and, at the
+end of its calculations, it can send some information to its
+neighbors. Vertex centric computations run for multiple iterations. In each
+iteration, every vertex runs some calculations based on the input from its
+neighbors and optionally gives an output to its neighbors. These vertex-
 centric computations `converge' after a given number of iterations. At this
 point, we observe the end state of each vertex to find the result of our
 algorithm.  
 
 \smallskip
-In our case, we want to perform 1 hop to 4 hop traversals on a graph. Therefore,
-we start by labelling our starting node `1' and label the rest of the nodes
-$\infty$. Then during every iteration, we check if the label of the current node
+In our case, we want to perform 1-hop to 4-hop traversals on a graph. Therefore,
+we start by labeling our starting node `1' and label the rest of the nodes
+$\infty$. Then, during every iteration, we check if the label of the current node
 is less than $\infty$, and send an output of $n+1$ if the label of the current
-node is $n$. This way, for each iteration, we label the neighbouring nodes of
-the nodes which we explored in the previous iteration. After the desired number
+node is $n$. This way, for each iteration, we label the neighboring nodes of
+the nodes that we explored in the previous iteration. After the desired number
 of iterations, we can read the node identifiers of all the nodes whose label
 is $h$, where $h$ is the number of hops.
 
-% Comparison with our solution and why is it slow 
-% Can it be faster? For which cases is it faster
-Figure \ref{fig:flinkCmp} shows a comparison between our solution and Apache
-Flink for finding n-hop neighbours of a starting vertex in the SF-1 dataset. 
+Figure \ref{fig:flinkCmp} compares our solution with Apache
+Flink for finding n-hop neighbors of a starting vertex in the SF-1 dataset. 
 It is clear that Apache
 Flink is around three orders of magnitude slower than our solution. This is
-primarily because a Flink cluster needs to load in the data before it can start
-performing any computations. Furthermore, the vertex centric computations are
-very expensive if there are only a handful of vertices that perform any useful
-computation. In this case, we have 3 million vertices whereas there may only be
-a few hundred nodes that are 3 hop neighbours of a node. This means that most of
+primarily because a Flink cluster needs to load the data before it can start
+performing any computations. Furthermore, vertex-centric computations are
+costly if only a handful of vertices perform meaningful
+computations. In this case, we have 3 million vertices, whereas there may only be
+a few hundred nodes that are 3-hop neighbours of a node. This means that most of
 the computation being performed is useless. Therefore, this result highlights
-the drawbacks of using vertex centric computations for cases where only a part
-of the graph is required in the result.
+the drawbacks of using vertex-centric computations for cases where only a part
+of the graph is explored.
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.5\textwidth]{figures/charts/flink_cmp}
@@ -680,23 +676,23 @@ of the graph is required in the result.
 
 
 \bigskip
-In this section, we presented the performance and architectural constraints of
-some other state of the art systems which may be used to perform traversals on
-large graphs. With our findings, we can place our tool within the wider
-landscape in terms its use-cases. First, while comparing to Neo4j, we saw that
-Neo4j is clearly superior to our solution, in terms of performance, for graphs
+In this section, we examined the performance and architectural constraints of
+other state-of-the-art systems that may be used to perform traversals on
+large graphs. With our findings, we can place our tool within the broader
+landscape regarding its use cases. First, while comparing it to Neo4j, we saw that
+Neo4j performs better than solution for graphs
 that can reside on a single machine. However, it gets complicated to maintain
 and query graphs when the graph needs to be sharded across various computational
-units. In such cases, our solution may provide a simpler way to query these
-graphs. On the other hand, Flink inherently relies on distribution of data among
-various computational units. Thus, flink, and other big data frameworks, are
-useful when you need to touch the entire graph in order to get the results for
+units. In such cases, our solution may provide a more straightforward way to query these
+graphs. On the other hand, Flink inherently relies on the distribution of data among
+various computational units. Thus, Flink and other big data frameworks are
+useful when you need to touch the entire graph to get the results for
 your computation. This might include computations like Page-Rank and other
 global algorithms. However, the processing model of Flink is not suitable when
-you only require part of the graph to answer your query because of the overhead
-of reading data from storage, and the vertex centric computation API. This is 
-the use-case where our solution is more efficient compared to flink. We provide
+you only require a part of the graph to answer your query. This is because of the overhead
+of reading data from storage and the limitations of the vertex-centric computation API. This is 
+the use case where our solution is more efficient than Flink. We provide
 a more abstract discussion of the cost of using our solution in Section
-\ref{sec:costModel}, however, it is apparent from this section, that our
+\ref{sec:costModel}, however, it is apparent from this section that our
 solution works well for use cases where users have to deal with large graphs but
 only need to query a small part of these graphs to answer their queries.
