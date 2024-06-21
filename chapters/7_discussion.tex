@@ -1,24 +1,24 @@
 % Grammar check needed.
 \section{Cost Model}\label{sec:costModel}
 In the previous section, we gave a subjective description of use cases where
-using our solution may be more effective. In this section, we provide a
-more formal comparison between architectures that separates
-compute and storage, and the architectures that do not. Let us assume that we
-have a graph database which is defined by two variables: its storage requirements and
+our solution may be more effective. In this section, we provide a
+more formal comparison between architectures that separate
+compute and storage and those that do not. Let us assume that we
+have a graph database that is defined by two variables: its storage requirements and
 its computational requirements. The storage requirement can be specified in
-terms of the number of bytes that the underlying data needs. However,
+terms of the number of bytes the underlying data needs. However,
 computational requirements depend on various factors like the type of query,
 and database architecture. Therefore, for simplification, we will consider
 `graph access per second' as a proxy for the computational requirements. Graph
 access per second means the number of times we look up a vertex's
-neighbours per second. Therefore, we will use $A$ as the graph accesses that
+neighbors per second. Therefore, we will use $A$ as the graph accesses that
 need to be performed every second, and $S$ as the storage that the underlying
 graph requires.
 
 \smallskip
 Now, we will consider the cost of running this database with AWS S3 as the
 storage layer. Let the cost of storing data on AWS S3 be $p_{s3}$ \$/GB/second. Now,
-we need to take into account the cost of running an EC2 instance for performing
+we need to account for the cost of running an EC2 instance for performing
 the required computations. Let us assume that a single EC2 instance can service
 $a_{s3}$ graph accesses per second, and that this instance costs $p_{i}$
 \$/second to run. Finally, there is a cost for sending a request to AWS S3 which
@@ -31,10 +31,10 @@ running the workload for one second would be:
 \end{equation}
 
 In equation \ref{eqn:s3Abstract}, the first component represents the storage
-cost and the rest of the equation represents the computational component. The
+cost, and the rest of the equation represents the computational component. The
 first component $S.p_{s3}$ is the cost of storing the underlying data. In the
-second component, we find the number of instances that we need to spawn based on
-the required throughput of graph accesses, and then we multiply that with the
+second component, we find the number of instances needed based on
+the required throughput of graph accesses, and then we multiply that by the
 cost of a single instance. Finally, we have the cost of sending requests to S3
 which is $p_r.A$. Although it is possible to group multiple requests to a single
 object in a request, we consider that each graph access is done with a separate
@@ -45,7 +45,7 @@ Now, we will formulate the cost for running the workload using a system that
 keeps the entirety of its data in an SSD. Let us assume that this instance is
 able to sustain a load of $a_{SSD}$ graph accesses per second and the cost of
 this instance is $p_j$ \$/second. For this system, these are the only two
-metrics we need to consider the cost of running the system for one second, which
+metrics needed to get the cost of running the system for one second, which
 is:
 \begin{equation}
     \label{eqn:ssdAbstract}
@@ -54,13 +54,13 @@ is:
 
 Note that equation \ref{eqn:ssdAbstract} does not consider the storage cost $S$
 in the equation. This is because the storage cost is subsumed within $p_j$
-because we need an instance which has enough capacity to hold the entire
+because we need an instance with enough capacity to hold the entire
 database. Therefore, the $p_j$ depends on the storage as follows:
 \begin{equation*}
     p_j &= \min_{i_{\text{cost}}}\big\{ i \in I: i_\text{storage} \ge S\big\}
 \end{equation*}
-In this equation, $I$ is the set of all available instances and we get the price
-of the cheapest possible instance which has enough storage to store the entire
+From this equation, where $I$ is the set of all available instances, we get the price
+of the cheapest possible instance with enough storage to store the entire
 graph.
 
 \medskip
@@ -70,43 +70,44 @@ whereas equation \ref{eqn:ssdAbstract} only has a single component which
 subsumes both the throughput and the storage requirements. By looking at these
 equations, it would appear that using AWS S3 is more costly because we
 essentially have a component related to the instance cost in both equations but
-AWS S3 has additional costs for storage and making request. This would indeed be
+AWS S3 has additional costs for storage and making requests. This would have
+been
 the case if cloud providers provided all possible permutations of compute and
 storage so that we would not waste any money while picking $p_j$. However, this
-is not the case; usually instances with more compute also have bigger SSDs. This
-may force us to pay for more compute than we actually need. We will now look at
-some concrete use cases and elucidate the difference between the cost for both
+is not the case; instances with more compute tend to have bigger SSDs. This
+may force us to pay for more compute than we need. We will now look at
+some concrete use cases and elucidate the difference between the costs for both
 approaches.
 
 \subsection{Use cases}
 We will now use equations \ref{eqn:s3Abstract} and \ref{eqn:ssdAbstract} to talk
 about use cases where separating storage and compute makes more sense than the
-model of coupled storage and compute. Before we introduce the use cases, we have
-to make some educated guesses about the accesses per second that AWS S3 and SSDs
+model of coupled storage and compute. Before introducing the use cases, we have
+to make a few educated guesses about the accesses per second that AWS S3 and SSDs
 can serve. To do this, we ran our solution with both backends: AWS S3 and SSDs.
 We found that a c7gn.xlarge instance can make and process around 5
-thousand accesses per second while a instance with SSD can make and process
-around 50 thousand accesses per second. The exact value of these numbers may
-vary from one setup to another but it is generally accepted that a single
+thousand accesses per second, while an instance with SSD can make and process
+around 50,000  accesses per second. The exact value of these numbers may
+vary from one setup to another, but it is generally accepted that a single
 instance would be able to make fewer network calls compared to SSD accesses.
 With these numbers, we will now consider two use cases to highlight where AWS S3
 should be chosen over tools that have coupled storage and compute.
 
 \medskip
-\textbf{Knowledge Graphs} are becoming an increasingly popular use cases for
-graph databases. Knowledge graph represent various knowledge concepts using a
+\textbf{Knowledge Graphs} are becoming an increasingly popular use case for
+graph databases. Knowledge graphs represent various concepts using a
 graph structure where related concepts have an edge between them. In such
 graphs, traversals may be used to find related concepts or to explore a common
 link between two concepts. Let us assume we have a knowledge graph that is used
 by a pharmaceutical company to model relationships between studies, populations,
 diseases, etc. We assume that the size of this graph is approximately 5 TB and
-that the usage of this database by scientists can be satisfied by 1 thousand
+that the usage of this database by scientists can be satisfied by 1,000
 graph accesses per second. Table \ref{table:costKnowledgeGraphs} shows the total
 cost for both storage mediums for this case. The cheapest general purpose
-instance which has an instance store of 5 TB is `m6id.24xlarge' which costs 5.7
+instance with an instance store of 5 TB is `m6id.24xlarge', which costs 5.7
 dollars per hour. We notice that, with AWS S3, we were able to use a much
 cheaper instance because we do not require a very high throughput. Whereas, if
-we use SSD, we are forced to use an instance which has 96 vCPUs although we may
+we use SSD, we are forced to use an instance with 96 vCPUs, although we may
 not need that much compute.
 
 \begin{table}[h!]
@@ -128,15 +129,15 @@ not need that much compute.
 
 \medskip
 \textbf{Fraud detection} is a common use case for graph databases as it enables
-security services to check whether a transaction is related to a bad actor or
-not. These systems can have a large database of information as they contain
+security services to check whether a transaction is related to a bad actor. 
+These systems can have a large database of information as they contain
 links between people, devices, and accounts. These systems can also have a very
-high workload if they verify every transaction that takes place. Therefore, if
+high workload if they verify every transaction. Therefore, if
 we assume, similar to the previous use case, that we have a graph that is
-5 TB in size and requires 100 thousand graph accesses per second to check for
-frauds. Table \ref{table:costFraudDetection} shows the total cost for both
-storage mediums for this case. We observe that using AWS S3 in this case is
-almost 10 times more expensive than using two instances with a total storage of
+5 TB in size and requires 100,000 graph accesses per second to check for
+fraud. Table \ref{table:costFraudDetection} shows the total cost for both
+storage mediums for this case. We observe that using AWS S3, in this case, is
+almost ten times more expensive than using two instances with a total storage of
 5 TB. The problem with using AWS S3 in this case is that the cost of making
 requests is so high that it offsets any benefit that we get by using
 cheaper instances.
