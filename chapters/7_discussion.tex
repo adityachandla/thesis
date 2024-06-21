@@ -195,7 +195,58 @@ not ideal for all use cases pertaining to querying graphs, but it does have
 significant benefits over other approaches for certain use cases we mentioned in
 this section.
 
-\section{Threats to credibility of this work}\label{sec:threats}
-% Update mechanisms cost.
-% Combined system architectures.
-% Market for the mentioned use cases.
+\section{Threats to credibility}\label{sec:threats}
+In this section, we discuss some threats to the credibility of this work. We
+first discuss why extending the current architecture to support updates might
+affect the appeal of our solution. Then, we summarize the assumptions we have
+made about the possible users of this system and why that requires more
+validation. 
+
+\subsection{Performing Updates}
+For a graph database, it is essential to be able to handle updates and support
+transactions. In 2008, Brantner et al.\cite{brantner2008building} proposed an
+update mechanism for B-trees stored in AWS S3. This architecture utilized AWS
+Simple Queue Service (SQS) to store updates, and these updates were flushed back
+to S3 at regular intervals. Their approach can be modified to handle updates to
+CSR file partitions. However, this approach incurs an additional cost of using
+AWS SQS and it also requires computational resources to flush the updates. It
+may also be possible to implement a multi-tenant storage service like
+Neon\cite{neonPostgres}. In this architecture, the graph access service may
+become part of a multi-tenant storage layer which handles updates.
+
+Both of the approaches mentioned above might affect the performance and the cost
+of the system. Therefore, it is possible that the cost of the infrastructure
+required to perform updates might become untenable, or that the performance
+degradation due to handling updates might be severe. In the future, the
+performance and cost of performing updates within the proposed architecture
+would need to be explored. However, existence of many popular relational
+databases like Neon\cite{neonPostgres} and Snowflake\cite{snowflake} that follow
+a similar architecture suggests that it is likely possible to handle updates in
+a performant and cost-effective manner.
+
+\subsection{Real world applications}
+While discussing the cost model, we mentioned that our system is cost effective
+for large graphs which only need a few thousand accesses per second. However, as
+mentioned in Section-\ref{sec:costModel}, our solution is not cost effective for
+small graphs that are only a few gigabytes in size or require hundreds of
+thousands of accesses per second. Recent research has shown that very large
+graphs are quite common in both industry and academia\cite{sahu2017ubiquity},
+however we do not know the throughput requirements of these use cases. There is
+no research indicating that there is a positive correlation between the size of
+a database and its throughput requirements. Therefore, the null hypothesis would
+be to assume that there would be many use cases where large graph databases have
+low throughput requirements.
+
+\smallskip
+Our research also assumes that the additional latency is acceptable to
+the users of the system. This may be applicable for graph databases that are
+queried by human actors. This is because, the difference between single digit
+millisecond latency and latency of a few hundred milliseconds is barely
+perceptable to users. However, there are many use cases where non-human actors
+query a database. Examples might include machine learning or fraud detection
+algorithms. In such cases, a latency increase of an order of magnitude may not
+be acceptable. However, we note that if the graph is sharded across multiple
+machines then the difference between performance might not be substantial as the
+cost of network communication would be incurred in either cases. Therefore, it
+is likely but not certain that there are use cases where the additional latency
+is acceptable.
