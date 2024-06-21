@@ -72,13 +72,15 @@ distributed system involves communication over the network which is at least thr
 magnitude more than accessing data from local storage. In return for this increased latency,
 we get virtually unlimited throughput as read operations are distributed across a cluster 
 of thousands of physical machines if not more. Therefore, in this paper, we evaluate ways to
-reduce the latency of accessing graphs. We will focus on the 
+reduce the latency of accessing graphs and then quantify the performance
+benefits of increased throughput capacity by employing parallelism. We will focus on the 
 performance of two commonly used graph traversal algorithms: Breadth-first search 
 (BFS) and Depth-first search (DFS). More formally, the first research
 objective is as follows:
 \begin{displayquote}
     \textbf{RO 1:} Gauge the effectiveness of caching and prefetching techniques
-    on the latency of graph access for graph traversals.
+    on the latency of graph access for graph traversals and the effectiveness of
+    using parallelism to increase throughput of these traversals.
 \end{displayquote}
 
 \medskip

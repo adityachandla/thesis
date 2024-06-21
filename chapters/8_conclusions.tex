@@ -1,3 +1,62 @@
+We started the paper with two research objectives pertaining to the
+applicability of a graph database that separates compute and storage. The first
+objective was to gauge the applicability of employing prefetching and caching
+techniques to reduce the latency of accessing data in the distirbuted data
+store. The second objective was to provide a cost model which might enable users
+to decide whether using AWS S3 as storage backend would be more cost-efficient.
+After answering these questions, we will also mention some future research
+objectives that need to be achieved to create a graph database based on AWS S3.
+
+\medskip
+In section \ref{sec:accessCachePrefetching} we defined the caching and
+prefetching techniques that we use to reduce the latency for our architecture.
+Then in section \ref{sec:cmpBaseline}, we compare this approach with a baseline
+approach and conclude that our approach provides substantially lower latency but
+only for large graphs. Then, we also break down the effectiveness of each
+component of our system and evaluate their effectiveness individually. After
+that, we discuss how we can increase parallelism to reduce the overall running
+time for a workload. Then, in section \ref{sec:partitionSize}, we
+explore the effect that partition sizes have on the total time taken to run a
+workload. Finally, in section \ref{sec:distDeploy}, we use a distributed
+deployment to verify that we can indeed scale the performance of our solution by
+adding more compute.
+
+\medskip
+In order to provide a cost model, we first compare the performance of our tools
+with other state-of-the-art technologies that can be used to perform traversals
+on large graphs in section \ref{sec:cmpOtherTools}. By doing this, we find that 
+the case where our solution outperforms other tools is when the size of the
+graph is huge and the throughput requirements are relatively low. Then in
+section \ref{sec:costModel}, we provide a mathematical model to gauge the cost
+of solutions that couple storage and compute to our solution. Using some
+examples, we confirm that our solution is cost effective for large graphs with
+low throughput requirements. Finally, we also provide some extra benefits of
+using our approach as it delegates the responsibility of replication and
+consistency to AWS S3.
+
 \section{Future Work}\label{sec:futureWork}
-
-
+There are a lot of avenues for future research into the approach that we have
+suggested here. These opportunities for further research can be grouped into the
+following buckets:
+\begin{enumerate}
+    \item \textbf{Handling updates}: A graph database would more often than not
+        require updates. As we mentioned in section \ref{sec:threats}, there is
+        some research into how this can be handled for B-trees and this research
+        needs to be extended to incorporate our storage model. There may be
+        multiple ways of handling updates with multiple tradeoffs in terms of
+        properties like consistency, performance, and cost.
+    \item \textbf{Handling properties}: In this thesis, we did not consider node
+        and edge properties. We can group these properties into two categories:
+        fixed size properties, and variable size properties. For variable size
+        properties, like strings, we would require a different storage
+        mechanism. For fixed size properties, we would need to explore how they
+        could be incorporated into the CSR format that we described and how
+        would we handle schema evolution.
+    \item \textbf{Caching graphs}: In this thesis, we contrasted using AWS S3
+        with using an SSD for storing the graph. However, we may be able to get
+        the best performance by combining the two approaches. We could
+        therefore, store a large parts of subgraphs into SSD for fast retrieval
+        to reduce latency while still enjoying the benefits of AWS S3. We would
+        need to explore how can we choose which parts of graph to store locally
+        based on workloads or graph characteristics.
+\end{enumerate}
