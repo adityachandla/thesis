@@ -22,8 +22,8 @@ within forums, comment on posts, etc.
 The seven traversals that we have chosen can be divided into four parts. The
 first two traversals are 1-Hop traversals, which means they only access a node's
 immediate neighbours. Similarly, we have two queries for 2-Hop traversals, and
-3-Hop traversals. One of the two queries in each category is chosen in such a
-manner that the result cardinality is close to one, and the other query has a
+3-Hop traversals. One of the two traversals in each category is chosen in such a
+manner that the result cardinality is close to one, and the other traversal has a
 higher cardinality. However, for 4-Hop traversals, the baseline implementation
 was so slow that we do not have a high cardinality traversal for 4-Hops. The
 following list contains the details of the queries that were used for the
@@ -55,7 +55,7 @@ nodes chosen at random.
                 the edges with the label `PersonKnows'. After this, traverse the
                 edge with the label `PersonInterestTag' to get the interests of all
                 these people. Finally, traverse edges with the label `TagClass' to
-                find the tags for each of these interests. This query gives us
+                find the tags for each of these interests. This traversal gives us
                 the tags for the interests of a person's friends.
             \item \textbf{Q-6}: Start with a node of type `Post', and traverse
                 the edge with the label `PostContainerForum' to get the forum which
@@ -65,7 +65,7 @@ nodes chosen at random.
         \end{enumerate}
     \item \textbf{4 Hop}
         \begin{enumerate}
-            \item \textbf{Q-7}: This query starts with a `Comment', and looks for
+            \item \textbf{Q-7}: This traversal starts with a `Comment', and looks for
                 this comment's creator by following the `CommentCreator' label.
                 Then, we look at the tag superclasses of this person's interest
                 tag by following `PersonInterestTag', `TagClass', and
