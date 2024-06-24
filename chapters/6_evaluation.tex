@@ -94,7 +94,7 @@ we use.
  \hline
   & SF-1 & SF-10 \\ [0.5ex] 
  \hline\hline
-     \textbf{Nodes} & 3 Million & 30 Million \\ 
+     \textbf{Nodes} & 2.7 Million & 27 Million \\ 
      \textbf{Bidirectional edges} & 17 Million & 170 Million \\
      \textbf{Number of partitions} & 37 & 173 \\
      \textbf{Total size} & 286 MB & 2.8 GB \\
@@ -376,21 +376,23 @@ partition size impacts the request latency.
 
 \smallskip
 Figure-\ref{fig:partitionSizeImp} shows the running times for the parallel BFS
-algorithm at various levels of parallelism and various partition sizes. We do
-not see any significant difference between the running times with parallelisms of
-1 and 20, but we do see a difference for parallelisms of 4, 6, and, 10.
-We believe that we do not see a difference for parallelism of 1 because the
-request load is low, however, we do not see any difference for parallelism of 20
+algorithm at various levels of parallelism and various partition sizes. We
+notice a significant performance difference between partition size of 512 MB and
+others for parallelism of 1. However, we do not see any difference for smaller
+partition sizes for a parallelism of 1. Furthermore, We do
+not see any significant difference between the running times for a parallelism of
+20, but we see a difference for parallelisms of 4, 6, and 10.
+We believe that we do not see any difference for parallelism of 20
 because the data processing capabilities of our instance become the bottleneck.
-For parallelism of 4,6, and 10, we see that there is a difference of around 2.5
-seconds between partition size of 2 MB and that of 128 MB. This suggests that
+For parallelism of 4,6, and 10, we see that there is a difference of 2 to 4
+seconds between partition size of 2 MB and that of 512 MB. This difference suggests that
 smaller partition sizes may yield better latency. We note that even for the
-largest partition size of 128 MB, the promised throughput(SLA) that AWS S3 can
+largest partition size of 512 MB, the promised throughput(SLA) that AWS S3 can
 provide is
-121,000 requests per second which is still an order of magnitude more than the
-throughput that we utilize. Therefore, the latency improvements are not because
-of any throttling. However, it may be the case that with more files we use
-a larger percentage of AWS S3's cluster which resulted in lower
+27,500 requests per second, approximately five times more than the
+instance can utilize. Therefore, the latency improvements are not because
+of any throttling. However, it may be the case that, with more files, we use
+a higher percentage of AWS S3's cluster, which results in lower
 latency.
 \begin{figure}[ht]
     \centering
