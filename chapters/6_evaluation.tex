@@ -21,7 +21,7 @@ within forums, comment on posts, etc.
 \smallskip
 The seven traversals that we have chosen can be divided into four parts. The
 first two traversals are 1-Hop traversals, which means they only access a node's
-immediate neighbours. Similarly, we have two queries for 2-Hop traversals, and
+immediate neighbors. Similarly, we have two queries for 2-Hop traversals, and
 3-Hop traversals. One of the two traversals in each category is chosen in such a
 manner that the result cardinality is close to one, and the other traversal has a
 higher cardinality. However, for 4-Hop traversals, the baseline implementation
@@ -106,12 +106,12 @@ we use.
 
 \medskip
 In order to run these queries, we run the graph access service and graph
-algorithm service on an EC2 instances\cite{awsEC2}. AWS provides a variety of
+algorithm service on an EC2 instance\cite{awsEC2}. AWS provides a variety of
 compute instances for different workloads. In our case, we need a general
 purpose compute instance which has high bandwidth. At the time of writing this
 thesis, instances labeled `c7gn' fit these specifications the best. The
 particular instance that we use for most of our benchmarks is labeled
-`c7gn.xlarge' which provies a network bandwidth of 50 Gbps, has 8 Gigabytes of
+`c7gn.xlarge' which provides a network bandwidth of 50 Gbps, has 8 Gigabytes of
 RAM, has 4 vCPUs, and costs 0.25 \$/hour.
 
 \section{Comparison with baseline}\label{sec:cmpBaseline}
@@ -145,7 +145,7 @@ RAM, has 4 vCPUs, and costs 0.25 \$/hour.
     \label{fig:baselineCmp}
 \end{figure}
 Figure-\ref{fig:baselineCmp} contains the comparison of our final
-implemnetation, as described in Section \ref{sec:graphAccess} and Section 
+implementation, as described in Section \ref{sec:graphAccess} and Section 
 \ref{sec:parallelAlgorithms}, with the baseline implementation described in
 Section \ref{sec:baseline}. Figures \ref{fig:bfsSf1} and \ref{fig:bfsSf10}
 compare the performance of Breadth first search for scaling factor of 1 and 10.
@@ -377,7 +377,7 @@ partition size impacts the request latency.
 \smallskip
 Figure-\ref{fig:partitionSizeImp} shows the running times for the parallel BFS
 algorithm at various levels of parallelism and various partition sizes. We
-notice a significant performance difference between partition size of 512 MB and
+notice a significant performance difference between the partition size of 512 MB and
 others for parallelism of 1. However, we do not see any difference for smaller
 partition sizes for a parallelism of 1. Furthermore, We do
 not see any significant difference between the running times for a parallelism of
@@ -385,7 +385,7 @@ not see any significant difference between the running times for a parallelism o
 We believe that we do not see any difference for parallelism of 20
 because the data processing capabilities of our instance become the bottleneck.
 For parallelism of 4,6, and 10, we see that there is a difference of 2 to 4
-seconds between partition size of 2 MB and that of 512 MB. This difference suggests that
+seconds between the partition size of 2 MB and that of 512 MB. This difference suggests that
 smaller partition sizes may yield better latency. We note that even for the
 largest partition size of 512 MB, the promised throughput(SLA) that AWS S3 can
 provide is
@@ -513,7 +513,7 @@ joins\cite{kotiranta2022performance}.
 Neo4j\cite{neo4j} was one of the first native graph databases and is widely
 considered the most popular and widely used graph database. The community
 version of Neo4j is free to use, and its source code is hosted on Github.
-However, some few features that we use for this evaluation are only
+However, some features that we use for this evaluation are only
 available in the paid enterprise edition.
 
 \subsubsection{Standard Deployment}
@@ -666,7 +666,7 @@ primarily because a Flink cluster needs to load the data before it can start
 performing any computations. Furthermore, vertex-centric computations are
 costly if only a handful of vertices perform meaningful
 computations. In this case, we have 3 million vertices, whereas there may only be
-a few hundred nodes that are 3-hop neighbours of a node. This means that most of
+a few hundred nodes that are 3-hop neighbors of a node. This means that most of
 the computation being performed is useless. Therefore, this result highlights
 the drawbacks of using vertex-centric computations for cases where only a part
 of the graph is explored.
@@ -683,7 +683,7 @@ In this section, we examined the performance and architectural constraints of
 other state-of-the-art systems that may be used to perform traversals on
 large graphs. With our findings, we can place our tool within the broader
 landscape regarding its use cases. First, while comparing it to Neo4j, we saw that
-Neo4j performs better than solution for graphs
+Neo4j performs better than our solution for graphs
 that can reside on a single machine. However, it gets complicated to maintain
 and query graphs when the graph needs to be sharded across various computational
 units. In such cases, our solution may provide a more straightforward way to query these

@@ -51,12 +51,12 @@ following buckets:
         properties, like strings, we would require a different storage
         mechanism. For fixed size properties, we would need to explore how they
         could be incorporated into the CSR format that we described and how
-        would we handle schema evolution.
+        we would handle schema evolution.
     \item \textbf{Caching graphs}: In this thesis, we contrasted using AWS S3
         with using an SSD for storing the graph. However, we may be able to get
-        the best performance by combining the two approaches. We could
+        the best performance by combining the two approaches. We could,
         therefore, store a large parts of subgraphs into SSD for fast retrieval
         to reduce latency while still enjoying the benefits of AWS S3. We would
-        need to explore how can we choose which parts of graph to store locally
+        need to explore how we can choose which parts of the graph to store locally
         based on workloads or graph characteristics.
 \end{enumerate}

@@ -9,7 +9,7 @@ survey shows that scalability is the primary concern of graph database
 users\cite{sahu2017ubiquity}. As this scale
 increases, decoupling storage from graph query evaluations using distributed
 cloud storage services like AWS S3\cite{awsS3} may be
-more cost-efficient. These systems provide durable data storage, high
+more cost-efficient. These services provide durable data storage, high
 throughput, and a pay-as-you-go model where you only pay for the data you store
 and the number of requests you make. Making use of these characteristics would
 enable graph databases to provide more flexible scaling and alleviate 
@@ -20,11 +20,12 @@ the feasibility of such database architectures.
 The idea of having separate storage and compute has been studied in the context
 of relational databases. In 2008, Brantner et al.\cite{brantner2008building}
 described how a relational database could be built on AWS S3 while 
-providing atomicity, isolation, and durability. Snowflake\cite{snowflake} was
+providing atomicity, isolation, and durability.
+Snowflake\cite{dageville2016snowflake}, in 2016, was
 one of the first databases that fully realized the idea of having
 separate storage and compute layers. This idea was adopted by other databases
 like AWS Aurora\cite{verbitski2017amazon} in 2017 and more recently by
-Neon\cite{neonPostgres}. Despite the existence of so many relational databases
+Neon\cite{neonPostgres} in 2021. Despite the existence of so many relational databases
 that separate storage and compute layers, this idea remains unexplored for
 native graph databases.
 
@@ -50,16 +51,18 @@ To study the impact of our techniques on access latency, we use
 Breadth-first search (BFS) and Depth-first search (DFS) to
 benchmark the performance. These two traversal algorithms are the most
 commonly used algorithms for performing graph traversals\cite{sahu2017ubiquity}.
-These traversal algorithms will have a bounded depth and thus, only
-access a small part of the graph. On the spectrum of graph algorithms from OLTP
-to OLAP as described by Besta et al.\cite{besta2023demystifying}, these 
+These traversal algorithms have a bounded depth and thus, only
+access a small part of the graph. On the spectrum of graph algorithms from
+Online transaction processing (OLTP)
+to Online analytical processing (OLAP) as described by 
+Besta et al.\cite{besta2023demystifying}, these 
 traversal algorithms lie
-more on the OLTP side as the portion of the graph explored by a single traversal
+more towards the OLTP side as the portion of the graph explored by a single traversal
 would be much smaller than the size of the graph.
 
 \medskip
-To minimize the latency, we will first propose a graph storage format that
-would provide a gain granular access over the graph stored in AWS S3. Then, we
+To minimize the latency, we propose a graph storage format that
+would provide granular access over the graph stored in AWS S3. Then, we
 would extend some of the existing caching techniques to lower the latency of
 graph access. Finally, we will describe the cases where it is viable and more
 cost-efficient to use an architecture that separates storage from compute.

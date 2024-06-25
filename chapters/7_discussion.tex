@@ -162,18 +162,18 @@ cheaper instances.
 \subsection{Other cost considerations}
 Apart from the cost of infrastructure, there are other aspects of a system that
 need to be taken into account when using a graph database. Although these
-consideration are hard to capture within a cost model, we will give a subjective
+considerations are hard to capture within a cost model, we will give a subjective
 description of some of these additional costs.
 \begin{enumerate}
     \item \textbf{Cost of update mechanisms}: Although we have only considered a
         read-only workload for the cost model, real databases also need to
         provide support for transactions. The mechanism for supporting ACID
         transactions will likely differ between the two approaches. Therefore,
-        it may incur different infrastructure and maintainance costs which are
+        it may incur different infrastructure and maintenance costs which are
         important to consider.
     \item \textbf{Migration cost}: When using an SSD for storing a graph, the
         graph may grow to an extent that the user may have to upgrade an
-        instance to accomodate the graph. This migration of a production
+        instance to accommodate the graph. This migration of a production
         workload is tricky and brings with it various challenges like ensuring
         data durability, and minimizing the downtime. These efforts require
         additional labor cost which should be taken into account.

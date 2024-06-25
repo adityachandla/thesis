@@ -36,7 +36,7 @@ components present in this figure:
 \end{figure}
 
 Looking at the architecture in Figure \ref{fig:sysArch} it is natural to wonder
-why do we have two separate services for accessing the graph and performing
+why we have two separate services for accessing the graph and performing
 traversals on that graph. There are two reasons for this separation: first, it
 separates the logic for accessing graphs from the logic for performing
 traversals with minimal overhead; second, this type of architecture is
@@ -86,7 +86,7 @@ that file to the cache.
 
 \medskip
 The approach described in this section is quite straightforward, but there are
-various improvements that can improve the performance and to better 
+various improvements that can enhance the performance and to better 
 leverage the features provided by AWS S3. In the following sections, we will
 discuss how we can improve both the graph access service
 as well as the graph algorithm service. 
@@ -213,7 +213,7 @@ standard LRU cache. We will now discuss some of the design choices that we have
 made for this cache.
 
 \medskip
-First, if multiple traversals happening, we would create a separate
+First, if multiple are traversals happening, we would create a separate
 prefetcher for each traversal. This choice ensures that there is minimal
 interference on the performance of a traversal depending on other traversals
 that may be happening. This comes with the added cost of having more worker
@@ -259,7 +259,7 @@ attention to graph algorithm service, where we will modify our traversals to
 better fit the capabilities of AWS S3.
 
 
-\section{Prallelizing traversals}\label{sec:parallelAlgorithms}
+\section{Parallelizing traversals}\label{sec:parallelAlgorithms}
 One of the main advantages of using AWS S3 is that it can sustain a very
 high throughput. The caching mechanisms mentioned in the previous sections
 reduce the latency for accessing a node's neighbors and mitigate expensive
