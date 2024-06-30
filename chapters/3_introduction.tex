@@ -1,20 +1,21 @@
 % What do I want to say:
 % Start with why graphs are useful 
 % Then talk about graph databases 
-The size of graphs being used in both academia and industry is increasing at a
-rapid rate, and as a result, it has become common for graphs to have tens of
-billions of edges\cite{sahu2017ubiquity}. Furthermore, this trend is expected to
-continue as the amount of data collected and processed increases. A recent
-survey shows that scalability is the primary concern of graph database
-users\cite{sahu2017ubiquity}. As this scale
-increases, decoupling storage from graph query evaluations using distributed
+The size of graphs used in academia and industry is increasing rapidly, and as a result, 
+it has become common for graphs to have tens of
+billions of edges\cite{sahu2017ubiquity}. This trend is expected to
+continue as the amount of data being collected and processed increases. A recent
+survey shows that scalability is already the primary concern of graph database
+users\cite{sahu2017ubiquity}. As the scale of graphs
+increases further, decoupling storage from graph query evaluations using distributed
 cloud storage services like AWS S3\cite{awsS3} may be
 more cost-efficient. These services provide durable data storage, high
 throughput, and a pay-as-you-go model where you only pay for the data you store
-and the number of requests you make. Making use of these characteristics would
-enable graph databases to provide more flexible scaling and alleviate 
-the costs related to redundancy. Therefore, it is worthwhile to explore
-the feasibility of such database architectures.
+and the number of requests you make. Using these characteristics would
+enable graph databases to provide more flexible scaling. Furthermore, since
+these services ensure availability and durability, they would alleviates 
+the costs of maintaining redundant infrastructure for reliability. 
+Therefore, it is worthwhile to explore the feasibility of such database architectures.
 
 \medskip
 The idea of having separate storage and compute has been studied in the context
