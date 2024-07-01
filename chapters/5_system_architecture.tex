@@ -1,7 +1,7 @@
 \section{Component Overview}\label{sec:componentOverview}
 Figure \ref{fig:sysArch} contains the high-level overview of the system that
-we will use for query evaluation. We will now give a brief explanation of the
-components present in this figure:
+we will use for query evaluation. We now give a brief explanation of the
+components in this figure:
 \begin{enumerate}
     \item \textbf{LDBC}: The Linked Data Benchmark Council(LDBC) publishes datasets
         for various types of graph processing workloads. In this thesis, we make
@@ -41,7 +41,9 @@ traversals on that graph. There are two reasons for this separation: first, it
 separates the logic for accessing graphs from the logic for performing
 traversals with minimal overhead; second, this type of architecture is
 particularly amenable to the creation of a multi-tenant storage layer, as used
-in the Neon database \cite{neonPostgres}. This is why we have chosen to separate
+in the Neon database \cite{neonPostgres}. This multi-tenant storage layer would
+consist of a fleet of graph access instances that would be used by multiple
+graph algorithm service instances. This is why we have chosen to separate
 the service responsible for accessing the graph and caching from the service
 responsible for running traversal algorithms.
 
@@ -59,7 +61,7 @@ enables us to fetch parts of the graph that we need for processing. To
 do this, we convert the graph into an adjacency list, then partition that
 adjacency list based on size, and finally convert it to compressed sparse
 row (CSR) format \cite{duff1984computer}. With this partitioned CSR format stored
-in AWS S3, we aim to load the desired file whenever we want to fetch a node's
+in AWS S3, we aim to load the required file whenever we want to fetch a node's
 neighbors.
 
 \medskip
@@ -73,7 +75,7 @@ this index, we can get the file name for the AWS S3 file, which contains a parti
 node's neighbors. Additionally, this service also contains an LRU cache of some
 files that were fetched from AWS S3. The size of this cache is limited because each
 cache entry contains an entire file with adjacency information for
-hundreds of nodes. With these components in place, whenever the graph access
+thousands of nodes. With these components in place, whenever the graph access
 service gets a request, it first checks if that request can be served from the
 cache; if not, we fetch the file corresponding to the requested node and add
 that file to the cache.
@@ -88,8 +90,8 @@ that file to the cache.
 The approach described in this section is quite straightforward, but there are
 various improvements that can enhance the performance and to better 
 leverage the features provided by AWS S3. In the following sections, we will
-discuss how we can improve both the graph access service
-as well as the graph algorithm service. 
+discuss how we can improve the graph access service
+and the graph algorithm service to this end. 
 
 \section{Graph access service}\label{sec:graphAccess}
 In this section, we first describe a modification of the CSR format in
@@ -101,13 +103,13 @@ Section \ref{sec:cachingDistSys}.
 \subsection{Modified CSR structure}\label{sec:modifiedCsr}
 In the baseline implementation of the graph access service described in
 Section \ref{sec:baseline}, we had to download entire files to access
-a node's neighbors. This approach suffers from a couple of problems, making
+a node's neighbors. This approach suffers from a couple of problems that makes
 fetching inefficient and restrictive. The first problem is that we
 fetch and parse the information for an entire file to access a single
 node's neighbors, which is wasteful. Furthermore, this approach hinders our
 ability to achieve a higher level of granularity for better cache performance.
-Second, this approach makes it harder to utilize the fact that AWS S3 replicates
-files to various servers. Due to these problems, we modified the
+Second, this approach makes it harder to utilize the fact that multiple servers
+within AWS S3 can serve requests for every file. Due to these problems, we modified the
 underlying binary format and the method to fetch a node's neighbors.
 
 \medskip
@@ -137,7 +139,7 @@ store the first layer of every file in memory and fetch the second layer of a
 file when it is first accessed. Doing so would enable us to fetch a
 node's incoming or outgoing neighbors without additional overhead.
 Furthermore, we can now parallelize requests to a single file, which might lead
-to better throughput since these requests would likely be distributed to
+to better throughput since these requests would likely be routed to
 different instances within AWS S3. As an additional benefit, we can now perform
 caching on a more granular level since we do not incur the overhead of fetching
 and parsing an entire file whenever we need to access a node's neighbors.
@@ -195,7 +197,7 @@ object is accessed, we only need to change the position of the accessed node
 within the heap. This enables us to perform access and insertion operations in
 $\mathcal{O}(\log(n))$ time. Although simple LRU cache implementations have an
 access and insertion time complexity of $\mathcal{O}(1)$,  this cache provides 
-us with a good tirade between time complexity and flexibility for 
+us with a good trade-off between time complexity and flexibility for 
 different workloads. We will talk more about the empirical evidence supporting
 our choice in the next chapter.
 
@@ -225,8 +227,8 @@ Apart from separate prefetcher caches, we also have an `In-flight Queue' within
 each prefetcher. This is useful because of the time gap between sending a
 request and getting a response. This time, as we will see in the next chapter,
 is an order of magnitude greater than the time scale at which the graph access
-service and the graph algorithm service work. Therefore, it makes sense to have
-a small amount of extra memory to ensure that if a request is already in
+service and the graph algorithm service interact. Therefore, it makes sense to have
+some extra memory to ensure that if a request is already in
 progress, we do not make a duplicate request, which would almost always take
 longer to execute. 
 
@@ -260,7 +262,7 @@ better fit the capabilities of AWS S3.
 
 
 \section{Parallelizing traversals}\label{sec:parallelAlgorithms}
-One of the main advantages of using AWS S3 is that it can sustain a very
+One of the main advantages of using AWS S3 is that it can sustain a
 high throughput. The caching mechanisms mentioned in the previous sections
 reduce the latency for accessing a node's neighbors and mitigate expensive
 network calls to AWS S3 in the hot path. These components help reduce
