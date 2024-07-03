@@ -1,6 +1,3 @@
-% What do I want to say:
-% Start with why graphs are useful 
-% Then talk about graph databases 
 The size of graphs used in academia and industry is increasing rapidly, and as a result, 
 it has become common for graphs to have tens of
 billions of edges\cite{sahu2017ubiquity}. This trend is expected to
@@ -106,17 +103,35 @@ as follows:
 In line with the research objectives mentioned in the previous section, the 
 unique contributions of this research are as follows:
 \begin{enumerate}
-    \item We provide the details of how we can perform traversals on large
-        graphs using a distributed cloud storage service. The architecture for
-        separating compute and storage was already proposed by Brantner et
-        al. \cite{brantner2008building} in 2008. However, there has been no
-        research on the viability of this architecture for graph databases. We
-        answer this question in Chapter \ref{chapter:systemArchitecture} and
-        discuss its performance in Chapter \ref{chapter:evaluation}.
+    \item We provide the details of an architecture that can be used to perform 
+        traversals on large graphs using a distributed cloud storage service. 
+        (Section \ref{sec:componentOverview}). 
+    \item We explore the following performance optimizations to lower the latency and
+        increase the throughput of these traversals:
+        \begin{enumerate}
+            \item Using a modified CSR format. (Section \ref{sec:modifiedCsr})
+            \item Utilizing LRFU cache and a graph aware prefetcher 
+                (Section \ref{sec:accessCachePrefetching}).
+            \item Parallelizing traversals (Section
+                \ref{sec:parallelAlgorithms})
+        \end{enumerate}
+    \item We compare the performance of the proposed architecture with:
+        \begin{enumerate}
+            \item A baseline solution without any of the proposed optimizations.
+                (Section \ref{sec:cmpBaseline})
+            \item A popular graph database, Neo4j. (Section \ref{sec:neo4jCmp})
+            \item A popular big data processing framework, Apache Flink.
+                (Section \ref{sec:flinkCmp})
+        \end{enumerate}
+    \item We evaluate the impact of partition sizes on the performance of
+        traversals. (Section \ref{sec:partitionSize})
+    \item We measure the performance improvements with distributed deployments
+        of the proposed architecture. (Section \ref{sec:distDeploy})
     \item We provide a cost model to enable users and developers of graph
-        databases to check if using S3 or similar tools would be a better fit their use case.
-        The authors are not aware of any research which answers this question.
-        We explore this question in Section \ref{sec:costModel}.
+        databases to check when using a service like AWS S3 would be more cost
+        efficient. (Section \ref{sec:costModel})
+    \item We identify use cases where using our proposed architecture is
+        cheaper compared to traditional architectures. (Section \ref{sec:useCases})
 \end{enumerate}
 
 
