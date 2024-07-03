@@ -676,9 +676,8 @@ of the graph is explored.
     \caption{Apache Flink}
     \label{fig:flinkCmp}
 \end{figure}
-
-
 \bigskip
+
 In this section, we examined the performance and architectural constraints of
 other state-of-the-art systems that may be used to perform traversals on
 large graphs. With our findings, we can place our tool within the broader
@@ -695,7 +694,62 @@ global algorithms. However, the processing model of Flink is not suitable when
 you only require a part of the graph to answer your query. This is because of the overhead
 of reading data from storage and the limitations of the vertex-centric computation API. This is 
 the use case where our solution is more efficient than Flink. We provide
-a more abstract discussion of the cost of using our solution in Section
+a more abstract discussion of the cost of using our solution in Section 
 \ref{sec:costModel}, however, it is apparent from this section that our
 solution works well for use cases where users have to deal with large graphs but
 only need to query a small part of these graphs to answer their queries.
+
+\section{Key Takeaways}\label{sec:keyTakeaways}
+The key takeaways from this chapter are as follows:
+\begin{enumerate}
+    \item \textbf{Comparison with baseline}
+        \begin{enumerate}
+            \item The proposed architecture reduces the workload running time from 14
+                minutes to 24 seconds, delivering a 35x improvement for large graphs
+                (SF-10). 
+            \item For smaller graphs (SF-1), the baseline implementation performs
+                marginally better because most of the data fits into the in-memory cache.
+            \item Due to implementation bottlenecks of the parallel DFS, it takes almost
+                5 times longer to finish the workload compared to BFS.
+        \end{enumerate}
+    \item \textbf{Inter-traversal parallelism}
+        \begin{enumerate}
+            \item By running multiple traversals in parallel, we see a marked
+                improvement in the performance of both BFS (24 seconds to 3
+                seconds) and DFS (67 seconds to 5 seconds).
+            \item The improvement in performance tapers off due to limitations
+                of the underlying hardware. Increasing parallelism from 1 to 4
+                gives the most improvement (4x) but increasing parallelism from
+                10 to 20 results in a very modest improvement (1.25x).
+        \end{enumerate}
+    \item \textbf{Impact of object type and partition size}
+        \begin{enumerate}
+            \item We found that using S3 One-Zone lowers the latency and
+                improves the workload running time by an order of magnitude. 
+            \item We found that smaller partition sizes provide marginal
+                improvements to the workload running time even if the utilized
+                throughput is well below the SLA.
+        \end{enumerate}
+    \item \textbf{Distributed deployment}
+        \begin{enumerate}
+            \item We observed that we get upto 3x better performance by
+                deploying two instances of graph access service instead of a
+                single instance.
+            \item We also observe that scaling up the capabilities of these
+                instances improves the workload running times for parallelism of
+                upto 40, suggesting that the processing capabilities of
+                instances are the bottleneck instead of AWS S3. 
+        \end{enumerate}
+    \item \textbf{Comparison with other tools}
+        \begin{enumerate}
+            \item When comparing our solution to Neo4j we found that, if the
+                whole graph can fit on a single machine, Neo4j is an
+                order of magnitude faster than our solution. However, if the
+                data is sharded across multiple nodes then, in the worst case,
+                the performance of Neo4j can be worse than that of our solution.
+            \item When comparing our solution to Apache Flink we found that the
+                overhead of loading graphs and the lack of graph specific
+                distributed data structures causes Flink to be 2 orders of
+                magnitude slower than our solution.
+        \end{enumerate}
+\end{enumerate}
