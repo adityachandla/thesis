@@ -732,24 +732,24 @@ The key takeaways from this chapter are as follows:
         \end{enumerate}
     \item \textbf{Distributed deployment}
         \begin{enumerate}
-            \item We observed that we get upto 3x better performance by
+            \item We observed that we get up to 3x better performance by
                 deploying two instances of graph access service instead of a
                 single instance.
             \item We also observe that scaling up the capabilities of these
-                instances improves the workload running times for parallelism of
-                upto 40, suggesting that the processing capabilities of
+                instances improve the workload running times for parallelism of
+                up to 40, suggesting that the processing capabilities of
                 instances are the bottleneck instead of AWS S3. 
         \end{enumerate}
     \item \textbf{Comparison with other tools}
         \begin{enumerate}
-            \item When comparing our solution to Neo4j we found that, if the
+            \item When comparing our solution to Neo4j we found that if the
                 whole graph can fit on a single machine, Neo4j is an
                 order of magnitude faster than our solution. However, if the
                 data is sharded across multiple nodes then, in the worst case,
                 the performance of Neo4j can be worse than that of our solution.
             \item When comparing our solution to Apache Flink we found that the
-                overhead of loading graphs and the lack of graph specific
-                distributed data structures causes Flink to be 2 orders of
+                overhead of loading graphs and the lack of graph-specific
+                distributed data structures cause Flink to be two orders of
                 magnitude slower than our solution.
         \end{enumerate}
 \end{enumerate}
