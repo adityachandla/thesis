@@ -4,8 +4,10 @@ put this work into context, we start by providing an overview of distributed
 storage services and more details about the particular storage service that
 will be used in this thesis. Then, we provide background on the idea of
 separating compute and storage, the evolution of this idea, and its
-applicability. Finally, we describe the current literature on how others have
-approached the idea of reducing access latency by using caching algorithms.
+applicability. After that, we describe the current literature on how others have
+approached the idea of reducing access latency by using caching algorithms. We
+end this section by comparing the contributions of this research with the
+current state-of-the-art in the field of graph databases.
 
 \section{Distributed storage services}\label{sec:distributedStorage}
 The idea of accessing files via the network can be traced back to the early days
@@ -254,3 +256,33 @@ sub-graph lookups. This idea helped them outperform CBGA for the task of sub-gra
 matching where they achieved a hit ratio of between 50\% and 65\%. 
 These contributions highlight the potential for graph-aware caching to
 reduce the latency of graph access.
+
+\section{Comparison with State-of-the-Art}\label{sec:cmpSOTA}
+In the field of graph databases, there are two types of databases based on how
+they store the underlying graph data: native graph databases and non-native graph
+databases. Native graph databases (like Neo4j\cite{neo4j}) use data structures that are 
+optimized for
+graph traversals and thus, usually deliver better performance for graph
+navigation operations. Non-native graph databases (like Amazon Neptune\cite{neptune}) rely 
+on storage mechanisms of
+relational databases, key-value stores, or document stores to store the
+underlying graph. In this paper, we propose an architecture that leverages
+distributed storage services to store graphs in a native graph data structure. 
+
+
+\smallskip
+This architecture is a unique contribution because most native graph databases 
+couple storage and compute together. Graph databases like Neo4j and
+Memgraph\cite{memgraph} require all the
+data to be present on a single machine. Although Neo4j supports sharding of
+graph data, the onus of doing so is primarily put on the user. There are some
+closed-source databases like Tigergraph\cite{tigergraph} that support automatic sharding, 
+but the storage and compute are tied together. In this landscape of graph 
+databases, we aim to explore the
+viability of a graph storage architecture that leverages distributed storage
+systems. In this architecture, all the graph data would be present on the
+distributed file system, and queries on this data would be served by stateless
+compute instances. This separation would provide bottomless storage and the
+ability to scale up or scale down compute easily. This ability to deliver
+practically infinite storage and compute elasticity is a feature missing from
+most native graph databases.
