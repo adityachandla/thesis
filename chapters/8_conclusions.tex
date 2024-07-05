@@ -8,26 +8,26 @@ After answering these questions, we will also mention some future research
 objectives that need to be achieved to create a graph database based on AWS S3.
 
 \medskip
-In section \ref{sec:accessCachePrefetching} we defined the caching and
+In Section \ref{sec:accessCachePrefetching} we defined the caching and
 prefetching techniques that we use to reduce the latency for our architecture.
-Then in section \ref{sec:cmpBaseline}, we compare this approach with a baseline
+Then in Section \ref{sec:cmpBaseline}, we compare this approach with a baseline
 approach and conclude that our approach provides substantially lower latency but
 only for large graphs. Then, we also break down the effectiveness of each
 component of our system and evaluate their effectiveness individually. After
 that, we discuss how we can increase parallelism to reduce the overall running
-time for a workload. Then, in section \ref{sec:partitionSize}, we
+time for a workload. Then, in Section \ref{sec:partitionSize}, we
 explore the effect that partition sizes have on the total time taken to run a
-workload. Finally, in section \ref{sec:distDeploy}, we use a distributed
+workload. Finally, in Section \ref{sec:distDeploy}, we use a distributed
 deployment to verify that we can indeed scale the performance of our solution by
 adding more compute.
 
 \medskip
 In order to provide a cost model, we first compare the performance of our tools
 with other state-of-the-art technologies that can be used to perform traversals
-on large graphs in section \ref{sec:cmpOtherTools}. By doing this, we find that 
+on large graphs in Section \ref{sec:cmpOtherTools}. By doing this, we find that 
 the case where our solution outperforms other tools is when the size of the
 graph is huge and the throughput requirements are relatively low. Then in
-section \ref{sec:costModel}, we provide a mathematical model to gauge the cost
+Section \ref{sec:costModel}, we provide a mathematical model to gauge the cost
 of solutions that couple storage and compute to our solution. Using some
 examples, we confirm that our solution is cost effective for large graphs with
 low throughput requirements. Finally, we also provide some extra benefits of
@@ -40,7 +40,7 @@ suggested here. These opportunities for further research can be grouped into the
 following buckets:
 \begin{enumerate}
     \item \textbf{Handling updates}: A graph database would more often than not
-        require updates. As we mentioned in section \ref{sec:threats}, there is
+        require updates. As we mentioned in Section \ref{sec:threats}, there is
         some research into how this can be handled for B-trees and this research
         needs to be extended to incorporate our storage model. There may be
         multiple ways of handling updates with multiple tradeoffs in terms of
