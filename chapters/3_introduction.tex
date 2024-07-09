@@ -37,12 +37,12 @@ intermediate results.
 
 \medskip
 There are two main challenges when considering databases with separate compute
-and storage: Distribution transaction management and access latency. The first
+and storage: Distributed transaction management and access latency. The first
 challenge, although more intricate, has been studied in the context of
 relational databases\cite{brantner2008building} and can be extended for other
 systems that follow this general architecture. Therefore, in this paper, we
 explore how to reduce the access latency for graph-specific operations in
-the context of graphs stored on distributed file systems.
+the context of graphs stored on a distributed file systems.
 
 \medskip
 To study the impact of our techniques on access latency, we use
@@ -62,7 +62,7 @@ would be much smaller than the size of the graph.
 To minimize the latency, we propose a graph storage format that
 would provide granular access over the graph stored in AWS S3. Then, we
 extend some of the existing caching techniques to lower the latency of
-graph access. Finally, we will describe the cases where it is viable and more
+graph access. Finally, we describe the cases where it is viable and more
 cost-efficient to use an architecture that separates storage from compute.
 
 \section{Research Objectives}
